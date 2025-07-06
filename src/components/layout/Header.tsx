@@ -27,7 +27,7 @@ export default function Header() {
 
         <nav className="hidden md:flex gap-6">
           {navLinks.map(link => (
-            <Link key={link.href} href={link.href} className="text-sm font-medium hover:text-primary transition-colors">
+            <Link key={link.label} href={link.href} className="text-sm font-medium hover:text-primary transition-colors">
               {link.label}
             </Link>
           ))}
@@ -61,7 +61,7 @@ export default function Header() {
                 </Link>
                 <nav className="grid gap-4">
                   {navLinks.map(link => (
-                    <Link key={link.href} href={link.href} className="text-lg font-medium hover:text-primary transition-colors">
+                    <Link key={link.label} href={link.href} className="text-lg font-medium hover:text-primary transition-colors">
                       {link.label}
                     </Link>
                   ))}
