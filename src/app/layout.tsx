@@ -2,10 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/context/CartProvider';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import WhatsAppButton from '@/components/layout/WhatsAppButton';
-import Chatbot from '@/components/chatbot/Chatbot';
+import SiteLayout from '@/components/layout/SiteLayout';
 
 export const metadata: Metadata = {
   title: 'GlowCare Gambia - Authentic Skincare & Wellness',
@@ -29,13 +26,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <CartProvider>
-          <div className="relative flex min-h-screen w-full flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <WhatsAppButton />
-            <Chatbot />
-          </div>
+          <SiteLayout>{children}</SiteLayout>
           <Toaster />
         </CartProvider>
       </body>
