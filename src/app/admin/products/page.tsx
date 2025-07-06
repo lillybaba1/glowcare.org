@@ -28,9 +28,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { products } from "@/lib/data";
+import { getProducts } from "@/lib/data";
 
 export default function AdminProductsPage() {
+  const products = getProducts();
   return (
     <Card>
         <CardHeader>

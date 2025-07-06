@@ -3,7 +3,7 @@
 import { useParams, notFound } from 'next/navigation';
 import Image from 'next/image';
 
-import { products } from '@/lib/data';
+import { getProductById } from '@/lib/data';
 import { useCart } from '@/hooks/use-cart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,7 +15,11 @@ export default function ProductDetailPage() {
   const { id } = params;
   const { addToCart } = useCart();
 
-  const product = products.find(p => p.id === id);
+  // In a real app with a database, this data would be fetched from the server.
+  // For our in-memory solution, we fetch it here. Because of how server actions
+  // and client components work, a full page navigation (like the redirect
+  // after adding a product) is needed to ensure this page gets the latest data.
+  const product = getProductById(Array.isArray(id) ? id[0] : id);
 
   if (!product) {
     notFound();

@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { products } from "@/lib/data";
+import { getProducts } from "@/lib/data";
 import { ShoppingBag, Users, DollarSign } from "lucide-react";
 
 export default function AdminDashboardPage() {
+    const products = getProducts();
     const totalProducts = products.length;
 
     return (

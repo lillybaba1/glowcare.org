@@ -27,7 +27,9 @@ export const categories: Category[] = [
   },
 ];
 
-export const products: Product[] = [
+// In-memory "database" for products.
+// NOTE: This is not a persistent data store. Data will be reset on server restart.
+let products: Product[] = [
   {
     id: '1',
     name: 'CeraVe Foaming Cleanser',
@@ -81,3 +83,36 @@ export const products: Product[] = [
     category: 'Cleansers',
   },
 ];
+
+
+/**
+ * Retrieves all products from the in-memory list.
+ * @returns An array of all products.
+ */
+export function getProducts(): Product[] {
+  return products;
+}
+
+/**
+ * Retrieves a single product by its ID from the in-memory list.
+ * @param id The ID of the product to retrieve.
+ * @returns The product if found, otherwise undefined.
+ */
+export function getProductById(id: string): Product | undefined {
+  return products.find((p) => p.id === id);
+}
+
+/**
+ * Adds a new product to the in-memory list.
+ * @param productData The data for the new product, without an ID.
+ * @returns The newly created product with an ID.
+ */
+export function addProductToMemory(productData: Omit<Product, 'id' | 'imageUrl'> & { imageUrl: string }) {
+  const newProduct: Product = {
+    id: new Date().getTime().toString(),
+    ...productData,
+  };
+  // Add to the beginning of the array so it appears first in the list
+  products.unshift(newProduct);
+  return newProduct;
+}

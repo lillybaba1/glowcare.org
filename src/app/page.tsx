@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductCard from '@/components/products/ProductCard';
-import { products, categories } from '@/lib/data';
+import { getProducts, categories } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 
 export default function Home() {
+  const products = getProducts();
   const featuredProducts = products.filter(p => p.featured);
 
   return (
@@ -24,7 +25,7 @@ export default function Home() {
               Shine with confidence.
             </p>
             <div className="flex gap-4">
-              <Button asChild size="lg" className="bg-transparent border border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
+              <Button asChild size="lg" variant="secondary">
                 <Link href="/products">Shop All Products</Link>
               </Button>
             </div>

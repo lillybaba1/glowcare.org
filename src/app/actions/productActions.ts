@@ -1,6 +1,8 @@
 'use server';
 
 import { z } from 'zod';
+import { redirect } from 'next/navigation';
+import { addProductToMemory } from '@/lib/data';
 
 const productFormSchema = z.object({
   name: z.string().min(2),
@@ -26,25 +28,10 @@ export async function addProduct(data: ProductFormValues) {
     };
   }
 
-  // TODO: Implement database logic to save the new product.
-  // In a real app, you would upload the base64 data URI to a file storage
-  // service (like Firebase Storage), get the public URL, and save that
-  // URL in your database.
+  // Save the product to our in-memory "database"
+  addProductToMemory(validationResult.data);
 
-  const newProduct = {
-    id: new Date().getTime().toString(), // temporary ID
-    ...validationResult.data,
-  };
-
-  console.log('New Product Added:', {
-    ...newProduct,
-    imageUrl: `Data URI starting with: ${newProduct.imageUrl.substring(0, 40)}...`,
-  });
-
-  // Since we aren't saving to a database, the new product won't
-  // actually appear on the site. This is a placeholder action.
-  return {
-    success: true,
-    message: 'Product has been added successfully (logged to console).',
-  };
+  // Redirect to the products page to see the new product.
+  // This ensures data consistency for our in-memory store.
+  redirect('/admin/products');
 }
