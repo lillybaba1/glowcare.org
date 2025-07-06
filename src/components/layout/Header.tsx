@@ -10,7 +10,7 @@ import CartSheet from '@/components/cart/CartSheet';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
-  { href: '#', label: 'About' },
+  { href: '/about', label: 'About' },
   { href: '#', label: 'Contact' },
 ];
 
