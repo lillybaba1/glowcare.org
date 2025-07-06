@@ -19,6 +19,7 @@ export default function ProductDetailPage() {
 
   if (!product) {
     notFound();
+    return null;
   }
 
   return (
