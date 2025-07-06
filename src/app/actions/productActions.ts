@@ -2,7 +2,9 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
-import { addProductToMemory } from '@/lib/data';
+import { db, storage } from '@/lib/firebase';
+import { ref as dbRef, push, set } from 'firebase/database';
+import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 
 const productFormSchema = z.object({
   name: z.string().min(2),
@@ -28,10 +30,31 @@ export async function addProduct(data: ProductFormValues) {
     };
   }
 
-  // Save the product to our in-memory "database"
-  addProductToMemory(validationResult.data);
+  try {
+    const { imageUrl, ...productData } = validationResult.data;
 
-  // Redirect to the products page to see the new product.
-  // This ensures data consistency for our in-memory store.
+    // 1. Upload image to Firebase Storage
+    const imageRef = storageRef(storage, `products/${Date.now()}-${Math.random().toString(36).substring(2)}`);
+    const uploadResult = await uploadString(imageRef, imageUrl, 'data_url');
+    const downloadURL = await getDownloadURL(uploadResult.ref);
+
+    // 2. Save product to Realtime Database
+    const newProductRef = push(dbRef(db, 'products'));
+    await set(newProductRef, {
+      ...productData,
+      imageUrl: downloadURL,
+    });
+
+  } catch (error) {
+    console.error("Error adding product:", error);
+    // This return is for the form to handle the error state
+    return {
+        success: false,
+        message: 'An unexpected error occurred while adding the product.',
+        errors: null,
+    };
+  }
+  
+  // 3. Redirect on success
   redirect('/admin/products');
 }

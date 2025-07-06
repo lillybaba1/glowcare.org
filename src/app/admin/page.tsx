@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getProducts } from "@/lib/data";
 import { ShoppingBag, Users, DollarSign } from "lucide-react";
 
-export default function AdminDashboardPage() {
-    const products = getProducts();
+export default async function AdminDashboardPage() {
+    const products = await getProducts();
     const totalProducts = products.length;
 
     return (

@@ -7,8 +7,8 @@ import ProductCard from '@/components/products/ProductCard';
 import { getProducts, categories } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 
-export default function Home() {
-  const products = getProducts();
+export default async function Home() {
+  const products = await getProducts();
   const featuredProducts = products.filter(p => p.featured);
 
   return (

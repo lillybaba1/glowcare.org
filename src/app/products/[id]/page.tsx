@@ -1,29 +1,18 @@
-'use client';
-
-import { useParams, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 
 import { getProductById } from '@/lib/data';
-import { useCart } from '@/hooks/use-cart';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Plus } from 'lucide-react';
+import AddToCartButton from '@/components/products/AddToCartButton';
 
-export default function ProductDetailPage() {
-  const params = useParams();
+export default async function ProductDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { addToCart } = useCart();
-
-  // In a real app with a database, this data would be fetched from the server.
-  // For our in-memory solution, we fetch it here. Because of how server actions
-  // and client components work, a full page navigation (like the redirect
-  // after adding a product) is needed to ensure this page gets the latest data.
-  const product = getProductById(Array.isArray(id) ? id[0] : id);
+  const product = await getProductById(id);
 
   if (!product) {
     notFound();
-    return null;
+    return null; // Return null after notFound to satisfy TypeScript
   }
 
   return (
@@ -53,9 +42,7 @@ export default function ProductDetailPage() {
               </CardDescription>
             </CardContent>
             <div className="mt-6 pt-6 border-t">
-                <Button size="lg" className="w-full" onClick={() => addToCart(product)}>
-                    <Plus className="mr-2 h-5 w-5" /> Add to Cart
-                </Button>
+                <AddToCartButton product={product} />
             </div>
           </div>
         </div>

@@ -1,4 +1,7 @@
 import type { Product, Category } from './types';
+import { db } from './firebase';
+import { ref, get, child } from 'firebase/database';
+
 
 export const categories: Category[] = [
   {
@@ -27,92 +30,44 @@ export const categories: Category[] = [
   },
 ];
 
-// In-memory "database" for products.
-// NOTE: This is not a persistent data store. Data will be reset on server restart.
-let products: Product[] = [
-  {
-    id: '1',
-    name: 'CeraVe Foaming Cleanser',
-    description: 'A gentle, foaming cleanser for normal to oily skin. Cleanses and removes oil without disrupting the protective skin barrier.',
-    price: 850,
-    imageUrl: 'https://placehold.co/400x400.png',
-    category: 'Cleansers',
-    featured: true,
-  },
-  {
-    id: '2',
-    name: 'Nivea Sun Protect & Moisture',
-    description: 'SPF 50+ sun lotion that provides immediate protection against sun exposure and long-term UV-induced skin damage.',
-    price: 950,
-    imageUrl: 'https://placehold.co/400x400.png',
-    category: 'Sunscreens',
-    featured: true,
-  },
-  {
-    id: '3',
-    name: 'The Ordinary Hyaluronic Acid 2%',
-    description: 'Combines low-, medium- and high-molecular-weight hyaluronic acid to support skin hydration to multiple layers of your skin.',
-    price: 750,
-    imageUrl: 'https://placehold.co/400x400.png',
-    category: 'Serums',
-    featured: true,
-  },
-  {
-    id: '4',
-    name: 'CeraVe Moisturising Cream',
-    description: 'A rich, non-greasy, fast-absorbing moisturizing cream for normal to dry skin on the face and body.',
-    price: 900,
-    imageUrl: 'https://placehold.co/400x400.png',
-    category: 'Moisturizers',
-    featured: true,
-  },
-  {
-    id: '5',
-    name: 'Beauty of Joseon Sunscreen',
-    description: 'A lightweight and creamy organic sunscreen that\'s comfortable on skin. It protects skin from harmful UV rays with its broad-spectrum SPF50+ PA++++.',
-    price: 1200,
-    imageUrl: 'https://placehold.co/400x400.png',
-    category: 'Sunscreens',
-  },
-  {
-    id: '6',
-    name: 'Cetaphil Gentle Skin Cleanser',
-    description: 'A creamy, non-foaming daily cleanser for all skin types, ideal for dry, sensitive skin.',
-    price: 800,
-    imageUrl: 'https://placehold.co/400x400.png',
-    category: 'Cleansers',
-  },
-];
-
-
 /**
- * Retrieves all products from the in-memory list.
+ * Retrieves all products from Firebase Realtime Database.
  * @returns An array of all products.
  */
-export function getProducts(): Product[] {
-  return products;
+export async function getProducts(): Promise<Product[]> {
+  try {
+    const snapshot = await get(ref(db, 'products'));
+    if (snapshot.exists()) {
+      const productsObject = snapshot.val();
+      // Convert the object of products into an array and add the id
+      const productsArray = Object.keys(productsObject).map(key => ({
+        id: key,
+        ...productsObject[key],
+      }));
+      // Reverse to show newest products first
+      return productsArray.reverse();
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
 }
 
 /**
- * Retrieves a single product by its ID from the in-memory list.
+ * Retrieves a single product by its ID from Firebase Realtime Database.
  * @param id The ID of the product to retrieve.
  * @returns The product if found, otherwise undefined.
  */
-export function getProductById(id: string): Product | undefined {
-  return products.find((p) => p.id === id);
-}
-
-/**
- * Adds a new product to the in-memory list.
- * @param productData The data for the new product, without an ID.
- * @returns The newly created product with an ID.
- */
-export function addProductToMemory(productData: Omit<Product, 'id' | 'imageUrl'> & { imageUrl: string }) {
-  const newProduct: Product = {
-    id: new Date().getTime().toString(),
-    ...productData,
-  };
-  // Add to the beginning of the array so it appears first in the list
-  products.unshift(newProduct);
-  return newProduct;
+export async function getProductById(id: string): Promise<Product | undefined> {
+  try {
+    const snapshot = await get(child(ref(db), `products/${id}`));
+    if (snapshot.exists()) {
+      return { id, ...snapshot.val() };
+    }
+    return undefined;
+  } catch (error) {
+    console.error(`Error fetching product with ID ${id}:`, error);
+    return undefined;
+  }
 }

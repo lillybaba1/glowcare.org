@@ -30,8 +30,8 @@ import {
 
 import { getProducts } from "@/lib/data";
 
-export default function AdminProductsPage() {
-  const products = getProducts();
+export default async function AdminProductsPage() {
+  const products = await getProducts();
   return (
     <Card>
         <CardHeader>
