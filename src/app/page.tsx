@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative w-full bg-accent py-20 md:py-32">
+      <section className="relative w-full bg-primary py-20 md:py-32">
         <div className="container mx-auto grid md:grid-cols-2 gap-8 items-center px-4 md:px-6">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-primary-foreground">
@@ -24,7 +24,7 @@ export default function Home() {
               Shine with confidence.
             </p>
             <div className="flex gap-4">
-              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button asChild size="lg" className="bg-transparent border border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
                 <Link href="/products">Shop All Products</Link>
               </Button>
             </div>
