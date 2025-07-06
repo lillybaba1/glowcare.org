@@ -5,8 +5,8 @@ export default function Footer() {
   return (
     <footer className="bg-muted text-muted-foreground">
       <div className="container mx-auto px-4 md:px-6 py-12">
-        <div className="grid gap-8 md:grid-cols-3">
-          <div className="flex flex-col gap-4">
+        <div className="grid gap-8 md:grid-cols-4">
+          <div className="flex flex-col gap-4 md:col-span-1">
              <Link href="/" className="flex items-center gap-2 font-bold text-lg text-foreground">
               <Sparkles className="h-6 w-6 text-primary" />
               <span className="font-headline">GlowCare Gambia</span>
@@ -25,7 +25,7 @@ export default function Footer() {
             </div>
           </div>
           
-          <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-8">
+          <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <h4 className="font-semibold text-foreground mb-3">Shop</h4>
               <ul className="space-y-2">
@@ -49,6 +49,12 @@ export default function Footer() {
               <ul className="space-y-2">
                 <li><Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link></li>
                 <li><Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-3">Admin</h4>
+              <ul className="space-y-2">
+                <li><Link href="/admin/add-product" className="hover:text-primary transition-colors">Add Product</Link></li>
               </ul>
             </div>
           </div>
