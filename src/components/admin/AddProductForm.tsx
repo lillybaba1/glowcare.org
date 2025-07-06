@@ -3,8 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Loader2, Upload } from 'lucide-react';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -40,8 +41,8 @@ const formSchema = z.object({
   price: z.coerce.number().positive({
     message: 'Price must be a positive number.',
   }),
-  imageUrl: z.string().url({
-    message: 'Please enter a valid URL.',
+  imageUrl: z.string().refine((val) => val.startsWith('data:image/'), {
+    message: 'Please upload a product image.',
   }),
   category: z.string().min(1, { message: 'Please select a category.' }),
   featured: z.boolean().default(false),
@@ -49,6 +50,8 @@ const formSchema = z.object({
 
 export default function AddProductForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const form = useForm<ProductFormValues>({
@@ -63,6 +66,19 @@ export default function AddProductForm() {
     },
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        form.setValue('imageUrl', result, { shouldValidate: true });
+        setPreview(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   async function onSubmit(values: ProductFormValues) {
     setIsLoading(true);
     try {
@@ -73,7 +89,21 @@ export default function AddProductForm() {
           description: result.message,
         });
         form.reset();
+        setPreview(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } else {
+        if (result.errors) {
+            Object.entries(result.errors).forEach(([field, messages]) => {
+                if (messages) {
+                    form.setError(field as keyof ProductFormValues, {
+                        type: 'server',
+                        message: messages.join(', '),
+                    });
+                }
+            });
+        }
         throw new Error(result.message);
       }
     } catch (error) {
@@ -122,55 +152,86 @@ export default function AddProductForm() {
           )}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <FormField
+          <FormField
             control={form.control}
             name="price"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Price (GMD)</FormLabel>
                 <FormControl>
-                    <Input type="number" placeholder="e.g. 850" {...field} />
+                  <Input type="number" placeholder="e.g. 850" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-            <FormField
+          />
+          <FormField
             control={form.control}
             name="category"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
+                  </FormControl>
+                  <SelectContent>
                     {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
+                      <SelectItem key={category.id} value={category.name}>
                         {category.name}
-                        </SelectItem>
+                      </SelectItem>
                     ))}
-                    </SelectContent>
+                  </SelectContent>
                 </Select>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
         <FormField
           control={form.control}
           name="imageUrl"
-          render={({ field }) => (
+          render={() => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>Product Image</FormLabel>
               <FormControl>
-                <Input placeholder="https://placehold.co/400x400.png" {...field} />
+                <div className="flex items-center gap-4">
+                  {preview ? (
+                    <Image
+                      src={preview}
+                      alt="Product preview"
+                      width={80}
+                      height={80}
+                      className="rounded-md object-cover aspect-square"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
+                      <Upload />
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {preview ? 'Change Image' : 'Upload Image'}
+                  </Button>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                  />
+                </div>
               </FormControl>
               <FormDescription>
-                Paste a link to the product image.
+                Upload an image for the product from your device.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -188,9 +249,7 @@ export default function AddProductForm() {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Featured Product
-                </FormLabel>
+                <FormLabel>Featured Product</FormLabel>
                 <FormDescription>
                   Featured products will be displayed on the home page.
                 </FormDescription>
