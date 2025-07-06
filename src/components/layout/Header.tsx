@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Menu, ShoppingBag, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useCart } from '@/hooks/use-cart';
 import CartSheet from '@/components/cart/CartSheet';
 
@@ -54,6 +54,9 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Main Menu</SheetTitle>
+              </SheetHeader>
               <div className="p-4">
                 <Link href="/" className="flex items-center gap-2 font-bold text-lg mb-8">
                   <Sparkles className="h-6 w-6 text-primary" />
