@@ -54,7 +54,7 @@ export default function Footer() {
             <div>
               <h4 className="font-semibold text-foreground mb-3">Admin</h4>
               <ul className="space-y-2">
-                <li><Link href="/admin/add-product" className="hover:text-primary transition-colors">Add Product</Link></li>
+                <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Dashboard</Link></li>
               </ul>
             </div>
           </div>
