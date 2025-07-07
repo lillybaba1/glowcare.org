@@ -60,7 +60,7 @@ export default function Footer() {
             <div>
               <h4 className="font-semibold text-foreground mb-3">Company</h4>
               <ul className="space-y-2">
-                <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+                <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
                 {isAdmin && (
                   <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Dashboard</Link></li>
                 )}
