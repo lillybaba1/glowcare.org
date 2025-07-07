@@ -8,8 +8,8 @@ export const categories: Category[] = [
   {
     id: 'cat1',
     name: 'Sunscreens',
-    imageUrl: 'https://placehold.co/400x400.png',
-    dataAiHint: 'sunscreen bottle'
+    imageUrl: 'https://images.unsplash.com/photo-1623676714504-edd78728155e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdW5zY3JlZW58ZW58MHx8fHwxNzUxOTA3NDIwfDA&ixlib=rb-4.1.0&q=80&w=1080',
+    dataAiHint: 'Sunscreens'
   },
   {
     id: 'cat2',
