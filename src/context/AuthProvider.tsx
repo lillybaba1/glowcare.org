@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = user?.email === "Alasansilla@gmail.com";
+  const isAdmin = user?.email === "admin@example.com";
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
