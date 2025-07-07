@@ -51,11 +51,12 @@ export default function Chatbot() {
       const { response } = await skincareChatbot({ query: input });
       const botMessage: Message = { role: "bot", content: response };
       setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chatbot error:", error);
+      const errorContent = error?.message || "An unknown error occurred. Please check the server logs.";
       const errorMessage: Message = {
         role: "bot",
-        content: "Sorry, I'm having trouble connecting. Please try again later.",
+        content: `Sorry, I'm having trouble connecting. This is often due to a missing AI service API key in your .env file.\n\nDetails: ${errorContent}`,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -110,7 +111,7 @@ export default function Chatbot() {
                 </Avatar>
                 <div
                   className={cn(
-                    "rounded-lg p-3 text-sm max-w-[80%]",
+                    "rounded-lg p-3 text-sm max-w-[80%] whitespace-pre-wrap",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted"
