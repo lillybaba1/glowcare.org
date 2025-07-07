@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { ref, get } from 'firebase/database';
+import { ref, get, set } from 'firebase/database';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import type { AppUser } from '@/lib/types';
@@ -27,18 +27,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // User is logged in, fetch their role from the database
+        // User is logged in, fetch their role from the database.
         const userRef = ref(db, 'users/' + user.uid);
         try {
-          const snapshot = await get(userRef);
-          if (snapshot.exists()) {
-            setAppUser(snapshot.val());
-          } else {
-            // This case can happen if user exists in Auth but not in DB
-            setAppUser(null);
+          let snapshot = await get(userRef);
+          
+          // Self-healing: If user exists in Auth but not DB, create their record.
+          // This also fixes cases where the admin flag was missing.
+          if (!snapshot.exists() || (user.email === 'heiligegeist01@gmail.com' && !snapshot.val().isAdmin)) {
+            const newUserRecord: AppUser = {
+              email: user.email || '',
+              isAdmin: user.email === 'heiligegeist01@gmail.com',
+            };
+            await set(userRef, newUserRecord);
+            // Re-fetch the snapshot after creating/updating it
+            snapshot = await get(userRef);
           }
+          setAppUser(snapshot.val());
         } catch (error) {
-          console.error("Failed to fetch user role:", error);
+          console.error("Failed to fetch or create user data:", error);
           setAppUser(null);
         }
       } else {
