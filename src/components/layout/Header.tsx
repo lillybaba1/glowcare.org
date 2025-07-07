@@ -54,9 +54,9 @@ export default function Header() {
         <div className="flex items-center gap-3">
            <CartSheet>
             <Button variant="ghost" size="icon" className="relative">
-              <ShoppingBag className="h-6 w-6" />
+              <ShoppingBag className="h-7 w-7" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
+                <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   {cartCount}
                 </span>
               )}
