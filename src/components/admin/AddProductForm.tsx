@@ -4,10 +4,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Upload } from 'lucide-react';
 import Image from 'next/image';
+import type { Product } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -32,8 +33,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import { db, storage } from '@/lib/firebase';
-import { ref as dbRef, push, set } from 'firebase/database';
-import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref as dbRef, push, set, update } from 'firebase/database';
+import { ref as storageRef, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -45,7 +46,7 @@ const formSchema = z.object({
   price: z.coerce.number().positive({
     message: 'Price must be a positive number.',
   }),
-  imageUrl: z.string().refine((val) => val.startsWith('data:image/'), {
+  imageUrl: z.string().min(1, { // Can be a data URI or a regular URL now
     message: 'Please upload a product image.',
   }),
   category: z.string().min(1, { message: 'Please select a category.' }),
@@ -54,7 +55,12 @@ const formSchema = z.object({
 
 type ProductFormValues = z.infer<typeof formSchema>;
 
-export default function AddProductForm() {
+interface AddProductFormProps {
+  productToEdit?: Product;
+}
+
+export default function AddProductForm({ productToEdit }: AddProductFormProps) {
+  const isEditMode = !!productToEdit;
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,6 +79,13 @@ export default function AddProductForm() {
     },
   });
 
+  useEffect(() => {
+    if (isEditMode && productToEdit) {
+      form.reset(productToEdit);
+      setPreview(productToEdit.imageUrl);
+    }
+  }, [isEditMode, productToEdit, form]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -89,32 +102,57 @@ export default function AddProductForm() {
   async function onSubmit(values: ProductFormValues) {
     setIsLoading(true);
     try {
-      const { imageUrl, ...productData } = values;
+      let finalImageUrl = productToEdit?.imageUrl || '';
+      const isNewImage = values.imageUrl.startsWith('data:image/');
 
-      // 1. Upload image to Firebase Storage
-      const imageRef = storageRef(storage, `products/${Date.now()}-${Math.random().toString(36).substring(2)}`);
-      const uploadResult = await uploadString(imageRef, imageUrl, 'data_url');
-      const downloadURL = await getDownloadURL(uploadResult.ref);
+      // 1. Handle image upload if a new image was provided
+      if (isNewImage) {
+          // A. Delete old image if in edit mode and an old image exists
+          if (isEditMode && productToEdit.imageUrl.includes('firebasestorage.googleapis.com')) {
+              try {
+                  const oldImageRef = storageRef(storage, productToEdit.imageUrl);
+                  await deleteObject(oldImageRef);
+              } catch (error) {
+                  console.warn("Could not delete old image, it might not exist or there was an error:", error);
+              }
+          }
 
-      // 2. Save product to Realtime Database
-      const newProductRef = push(dbRef(db, 'products'));
-      await set(newProductRef, {
-        ...productData,
-        imageUrl: downloadURL,
-      });
+          // B. Upload new image
+          const newImageRef = storageRef(storage, `products/${Date.now()}-${Math.random().toString(36).substring(2)}`);
+          const uploadResult = await uploadString(newImageRef, values.imageUrl, 'data_url');
+          finalImageUrl = await getDownloadURL(uploadResult.ref);
+      }
+      
+      const productData = {
+        ...values,
+        imageUrl: finalImageUrl,
+      };
 
-      toast({
-        title: 'Product Added!',
-        description: `${values.name} has been successfully added.`,
-      });
+      // 2. Save product data to Realtime Database
+      if (isEditMode) {
+          const productRef = dbRef(db, `products/${productToEdit.id}`);
+          await update(productRef, productData);
+          toast({
+              title: 'Product Updated!',
+              description: `${values.name} has been successfully updated.`,
+          });
+      } else {
+          const newProductRef = push(dbRef(db, 'products'));
+          await set(newProductRef, productData);
+          toast({
+              title: 'Product Added!',
+              description: `${values.name} has been successfully added.`,
+          });
+      }
       
       router.push('/admin/products');
+      router.refresh(); // Force a refresh to show the new/updated product
 
     } catch (error: any) {
-      console.error("Error adding product:", error);
-      let description = 'Could not add product. Please try again.';
+      console.error("Error saving product:", error);
+      let description = `Could not save product. Please try again.`;
       if (error.message && error.message.toLowerCase().includes('permission denied')) {
-        description = 'Permission denied. Ensure your account has admin rights and check your Firebase Database rules.';
+        description = 'Permission denied. Ensure your account has admin rights and check your Firebase Database/Storage rules.';
       } else if (error.message) {
         description = error.message;
       }
@@ -183,6 +221,7 @@ export default function AddProductForm() {
                 <FormLabel>Category</FormLabel>
                 <Select
                   onValueChange={field.onChange}
+                  value={field.value}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -269,7 +308,7 @@ export default function AddProductForm() {
         />
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Add Product
+          {isEditMode ? 'Update Product' : 'Add Product'}
         </Button>
       </form>
     </Form>
