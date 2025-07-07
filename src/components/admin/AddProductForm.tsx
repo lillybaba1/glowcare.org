@@ -50,6 +50,7 @@ const formSchema = z.object({
     message: 'Please upload a product image.',
   }),
   category: z.string().min(1, { message: 'Please select a category.' }),
+  stock: z.coerce.number().int().nonnegative({ message: 'Stock must be 0 or more.' }).default(0),
   featured: z.boolean().default(false),
 });
 
@@ -75,13 +76,17 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
       price: 0,
       imageUrl: '',
       category: '',
+      stock: 0,
       featured: false,
     },
   });
 
   useEffect(() => {
     if (isEditMode && productToEdit) {
-      form.reset(productToEdit);
+      form.reset({
+        ...productToEdit,
+        stock: productToEdit.stock ?? 0, // Ensure stock has a default value
+      });
       setPreview(productToEdit.imageUrl);
     }
   }, [isEditMode, productToEdit, form]);
@@ -201,7 +206,7 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FormField
             control={form.control}
             name="price"
@@ -210,6 +215,19 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
                 <FormLabel>Price (GMD)</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="e.g. 850" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="stock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Stock Quantity</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g. 50" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

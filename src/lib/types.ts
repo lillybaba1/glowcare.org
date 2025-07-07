@@ -7,6 +7,7 @@ export type Product = {
   imageUrl: string;
   category: string;
   featured?: boolean;
+  stock?: number;
 };
 
 export type Category = {

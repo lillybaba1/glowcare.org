@@ -105,6 +105,19 @@ export default function AdminProductsPage() {
     }
   };
 
+  const getStockBadge = (stock?: number) => {
+    if (stock === undefined || stock === null) {
+      return <Badge variant="outline">Unknown</Badge>;
+    }
+    if (stock === 0) {
+      return <Badge variant="destructive">Out of Stock</Badge>;
+    }
+    if (stock < 10) {
+      return <Badge variant="secondary" className="bg-orange-200 text-orange-800">Low Stock</Badge>;
+    }
+    return <Badge variant="secondary" className="bg-green-200 text-green-800">In Stock</Badge>;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -142,8 +155,9 @@ export default function AdminProductsPage() {
                   <span className="sr-only">Image</span>
                 </TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">Price</TableHead>
+                <TableHead className="hidden md:table-cell">Stock</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -163,10 +177,13 @@ export default function AdminProductsPage() {
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{product.category}</Badge>
+                    {getStockBadge(product.stock)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     GMD {product.price.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {product.stock ?? 'N/A'}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

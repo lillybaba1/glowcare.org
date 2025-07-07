@@ -11,6 +11,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getProducts } from '@/lib/data';
+import type { Product } from '@/lib/types';
+
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'bot']),
@@ -26,6 +29,7 @@ const SkincareChatbotInputSchema = z.object({
     })
     .optional()
     .describe('The product the user is currently viewing, if any.'),
+  isAdmin: z.boolean().optional().describe('Whether the current user is an admin.'),
 });
 export type SkincareChatbotInput = z.infer<typeof SkincareChatbotInputSchema>;
 
@@ -38,16 +42,39 @@ export async function skincareChatbot(input: SkincareChatbotInput): Promise<Skin
   return skincareChatbotFlow(input);
 }
 
+const getStoreInventory = ai.defineTool(
+  {
+    name: 'getStoreInventory',
+    description: 'Gets the current inventory details for all products in the store, including their stock levels.',
+    outputSchema: z.array(
+      z.object({
+        name: z.string(),
+        stock: z.number().optional(),
+      })
+    ),
+  },
+  async () => {
+    const products: Product[] = await getProducts();
+    // Return only name and stock for the tool's purpose
+    return products.map(p => ({ name: p.name, stock: p.stock }));
+  }
+);
+
 const prompt = ai.definePrompt({
   name: 'skincareChatbotPrompt',
   input: {schema: SkincareChatbotInputSchema},
   output: {schema: SkincareChatbotOutputSchema},
-  prompt: `You are a friendly and expert skincare assistant for GlowCare Gambia, an online skincare store. Your personality is helpful, professional, and welcoming.
+  tools: [getStoreInventory],
+  prompt: `{{#if isAdmin}}
+You are a direct and efficient business assistant for GlowCare Gambia's store administrator. Your role is to provide factual answers to internal questions. You have access to tools to fetch data like inventory levels. Answer all admin questions directly.
+{{else}}
+You are a friendly and expert skincare assistant for GlowCare Gambia, an online skincare store. Your personality is helpful, professional, and welcoming. IMPORTANT: You must NEVER reveal internal business information like stock quantities, sales figures, or supplier details. If a customer asks for this information, politely state that you cannot provide it and offer to help with skincare advice or product information instead.
+{{/if}}
 
-You are having a conversation with a customer. Use the conversation history to understand the context and provide relevant, concise answers. Do not repeat greetings in every message. Get straight to the point while maintaining a friendly tone.
+Use the conversation history to understand the context. Do not repeat greetings in every message. Get straight to the point while maintaining the appropriate tone for your role (Admin Assistant or Customer Assistant).
 
 {{#if productContext}}
-The user is currently looking at this product, so prioritize information about it if their question is related.
+The user is currently looking at this product. If their question is about it, use this context:
 - Product Name: {{productContext.name}}
 - Product Description: {{productContext.description}}
 {{/if}}

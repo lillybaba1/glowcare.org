@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { skincareChatbot } from "@/ai/flows/skincare-chatbot";
 import type { Product } from '@/lib/types';
+import { useAuth } from "@/hooks/use-auth";
 
 interface Message {
   role: "user" | "bot";
@@ -32,6 +33,7 @@ export default function Chatbot({ productContext }: { productContext: ProductCon
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -57,6 +59,7 @@ export default function Chatbot({ productContext }: { productContext: ProductCon
       const { response } = await skincareChatbot({ 
         history: newMessages,
         productContext: productContext || undefined,
+        isAdmin,
       });
       const botMessage: Message = { role: "bot", content: response };
       setMessages((prev) => [...prev, botMessage]);
