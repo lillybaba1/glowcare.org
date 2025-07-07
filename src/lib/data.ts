@@ -14,8 +14,8 @@ export const categories: Category[] = [
   {
     id: 'cat2',
     name: 'Cleansers',
-    imageUrl: 'https://placehold.co/400x400.png',
-    dataAiHint: 'cleanser bottle'
+    imageUrl: 'https://images.unsplash.com/photo-1556227703-b7668d8cff99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyMHx8Y2xlYW5zZXJ8ZW58MHx8fHwxNzUxOTA3NDU5fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    dataAiHint: 'Cleansers'
   },
   {
     id: 'cat3',
