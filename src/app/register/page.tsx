@@ -40,10 +40,12 @@ export default function RegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       
+      const isAdmin = data.email.toLowerCase() === 'heiligegeist01@gmail.com';
+
       // Also create a user entry in the database
       await set(ref(db, 'users/' + userCredential.user.uid), {
         email: data.email,
-        role: 'customer',
+        role: isAdmin ? 'admin' : 'customer',
       });
 
       toast({ title: 'Registration successful!', description: 'You are now logged in.' });
