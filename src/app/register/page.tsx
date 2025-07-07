@@ -51,9 +51,12 @@ export default function RegisterPage() {
       toast({ title: 'Registration successful!', description: 'You are now logged in.' });
       router.push('/');
     } catch (error: any) {
-      let description = 'An error occurred. Please try again.';
-      if (error.message && error.message.toLowerCase().includes('permission denied')) {
-        description = 'Database permission error. Please ensure security rules are set correctly in your Firebase project.';
+      let description = 'An unknown error occurred. Please try again.';
+      
+      if (error.code === 'PERMISSION_DENIED' || (error.message && error.message.toLowerCase().includes('permission denied'))) {
+        description = 'Database permission error. This usually means your Firebase rules for the "users" collection are incorrect. Please ensure a new user can write to their own record.';
+      } else if (error.code === 'auth/email-already-in-use') {
+        description = 'This email address is already in use. Please log in or use a different email.';
       } else if (error.message) {
         description = error.message;
       }

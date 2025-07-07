@@ -150,15 +150,17 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
 
     } catch (error: any) {
       console.error("Error saving product:", error);
-      let description = `Could not save product. Please try again.`;
-      if (error.message && error.message.toLowerCase().includes('permission denied')) {
-        description = 'Permission denied. Ensure your account has admin rights and check your Firebase Database/Storage rules.';
+      let description = 'An unknown error occurred. Please try again.';
+
+      if (error.code === 'PERMISSION_DENIED' || (error.message && error.message.toLowerCase().includes('permission denied'))) {
+          description = 'Permission denied. Your Firebase Database rules are likely blocking this action. Please ensure your rules allow admins to write to the "products" collection.';
       } else if (error.message) {
-        description = error.message;
+          description = error.message;
       }
+
       toast({
         variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
+        title: 'Uh oh! Product could not be saved.',
         description: description,
       });
     } finally {
