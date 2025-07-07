@@ -1,7 +1,9 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/context/CartProvider';
+import { AuthProvider } from '@/context/AuthProvider';
 import SiteLayout from '@/components/layout/SiteLayout';
 
 export const metadata: Metadata = {
@@ -25,10 +27,12 @@ export default function RootLayout({
         ></link>
       </head>
       <body className="font-body antialiased">
-        <CartProvider>
-          <SiteLayout>{children}</SiteLayout>
-          <Toaster />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <SiteLayout>{children}</SiteLayout>
+            <Toaster />
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,5 +1,11 @@
+
+'use client'; // This must be a client component to use hooks
+
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, PlusCircle, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { LayoutDashboard, ShoppingBag, PlusCircle, Sparkles, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 import {
   SidebarProvider,
@@ -18,6 +24,23 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user, isAdmin, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      router.push('/login');
+    }
+  }, [user, isAdmin, loading, router]);
+
+  if (loading || !isAdmin) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+  
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-muted/40">

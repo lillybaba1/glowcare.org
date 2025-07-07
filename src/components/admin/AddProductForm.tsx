@@ -1,9 +1,11 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2, Upload } from 'lucide-react';
 import Image from 'next/image';
 
@@ -28,8 +30,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { addProduct, ProductFormValues } from '@/app/actions/productActions';
 import { categories } from '@/lib/data';
+import { db, storage } from '@/lib/firebase';
+import { ref as dbRef, push, set } from 'firebase/database';
+import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -48,11 +52,14 @@ const formSchema = z.object({
   featured: z.boolean().default(false),
 });
 
+type ProductFormValues = z.infer<typeof formSchema>;
+
 export default function AddProductForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -82,36 +89,33 @@ export default function AddProductForm() {
   async function onSubmit(values: ProductFormValues) {
     setIsLoading(true);
     try {
-      const result = await addProduct(values);
-      if (result.success) {
-        toast({
-          title: 'Success!',
-          description: result.message,
-        });
-        form.reset();
-        setPreview(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      } else {
-        if (result.errors) {
-            Object.entries(result.errors).forEach(([field, messages]) => {
-                if (messages) {
-                    form.setError(field as keyof ProductFormValues, {
-                        type: 'server',
-                        message: messages.join(', '),
-                    });
-                }
-            });
-        }
-        throw new Error(result.message);
-      }
-    } catch (error) {
+      const { imageUrl, ...productData } = values;
+
+      // 1. Upload image to Firebase Storage
+      const imageRef = storageRef(storage, `products/${Date.now()}-${Math.random().toString(36).substring(2)}`);
+      const uploadResult = await uploadString(imageRef, imageUrl, 'data_url');
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
+      // 2. Save product to Realtime Database
+      const newProductRef = push(dbRef(db, 'products'));
+      await set(newProductRef, {
+        ...productData,
+        imageUrl: downloadURL,
+      });
+
+      toast({
+        title: 'Product Added!',
+        description: `${values.name} has been successfully added.`,
+      });
+      
+      router.push('/admin/products');
+
+    } catch (error: any) {
+      console.error("Error adding product:", error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description:
-          error instanceof Error ? error.message : 'Could not add product.',
+        description: error.message || 'Could not add product. Check permissions in Firebase.',
       });
     } finally {
       setIsLoading(false);

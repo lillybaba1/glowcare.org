@@ -1,7 +1,13 @@
+
+'use client';
+
 import Link from 'next/link';
 import { Sparkles, Instagram, Facebook, Twitter } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function Footer() {
+  const { isAdmin } = useAuth();
+
   return (
     <footer className="bg-muted text-muted-foreground">
       <div className="container mx-auto px-4 md:px-6 py-12">
@@ -52,9 +58,12 @@ export default function Footer() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-3">Admin</h4>
+              <h4 className="font-semibold text-foreground mb-3">Company</h4>
               <ul className="space-y-2">
-                <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Dashboard</Link></li>
+                <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+                {isAdmin && (
+                  <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Dashboard</Link></li>
+                )}
               </ul>
             </div>
           </div>
