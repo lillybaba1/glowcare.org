@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -6,7 +7,7 @@ import type { Product } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/use-cart';
-import { Plus } from 'lucide-react';
+import { Plus, XCircle } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -14,6 +15,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
+  const isOutOfStock = product.stock !== undefined && product.stock === 0;
 
   return (
     <Card className="flex flex-col overflow-hidden h-full group">
@@ -38,8 +40,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-lg font-semibold text-primary">GMD {product.price}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full" onClick={() => addToCart(product)}>
-            <Plus className="mr-2 h-4 w-4" /> Add to Cart
+        <Button className="w-full" onClick={() => addToCart(product)} disabled={isOutOfStock}>
+            {isOutOfStock ? (
+                <>
+                    <XCircle className="mr-2 h-4 w-4" /> Out of Stock
+                </>
+            ) : (
+                <>
+                    <Plus className="mr-2 h-4 w-4" /> Add to Cart
+                </>
+            )}
         </Button>
       </CardFooter>
     </Card>
