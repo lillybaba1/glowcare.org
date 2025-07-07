@@ -19,13 +19,13 @@ export default function Footer() {
             </Link>
             <p className="text-sm">Authentic skincare and wellness products delivered to your doorstep in The Gambia.</p>
             <div className="flex gap-4 mt-2">
-              <Link href="#" aria-label="Facebook">
+              <Link href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                 <Facebook className="h-6 w-6 hover:text-primary transition-colors" />
               </Link>
-              <Link href="#" aria-label="Instagram">
+              <Link href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <Instagram className="h-6 w-6 hover:text-primary transition-colors" />
               </Link>
-              <Link href="#" aria-label="Twitter">
+              <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
                 <Twitter className="h-6 w-6 hover:text-primary transition-colors" />
               </Link>
             </div>
@@ -44,17 +44,17 @@ export default function Footer() {
             <div>
               <h4 className="font-semibold text-foreground mb-3">Support</h4>
               <ul className="space-y-2">
-                <li><Link href="#" className="hover:text-primary transition-colors">Contact Us</Link></li>
+                <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
                 <li><Link href="/faq" className="hover:text-primary transition-colors">FAQs</Link></li>
-                <li><Link href="#" className="hover:text-primary transition-colors">Delivery Info</Link></li>
-                <li><Link href="#" className="hover:text-primary transition-colors">Return Policy</Link></li>
+                <li><Link href="/delivery" className="hover:text-primary transition-colors">Delivery Info</Link></li>
+                <li><Link href="/returns" className="hover:text-primary transition-colors">Return Policy</Link></li>
               </ul>
             </div>
              <div>
               <h4 className="font-semibold text-foreground mb-3">Legal</h4>
               <ul className="space-y-2">
-                <li><Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-                <li><Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
             <div>
