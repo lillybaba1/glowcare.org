@@ -26,5 +26,5 @@ export type CartItem = {
 
 export type AppUser = {
   email: string;
-  role: 'admin' | 'customer';
+  isAdmin?: boolean;
 };

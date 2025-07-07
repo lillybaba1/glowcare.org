@@ -45,7 +45,7 @@ export default function RegisterPage() {
       // Also create a user entry in the database
       await set(ref(db, 'users/' + userCredential.user.uid), {
         email: data.email,
-        role: isAdmin ? 'admin' : 'customer',
+        isAdmin: isAdmin,
       });
 
       toast({ title: 'Registration successful!', description: 'You are now logged in.' });

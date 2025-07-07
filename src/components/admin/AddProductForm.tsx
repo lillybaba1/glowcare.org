@@ -112,9 +112,9 @@ export default function AddProductForm() {
 
     } catch (error: any) {
       console.error("Error adding product:", error);
-      let description = 'Could not add product. Check permissions in Firebase.';
+      let description = 'Could not add product. Please try again.';
       if (error.message && error.message.toLowerCase().includes('permission denied')) {
-        description = 'Permission denied. Please check your Firebase Storage and Database rules.';
+        description = 'Permission denied. Ensure your account has admin rights and check your Firebase Database rules.';
       } else if (error.message) {
         description = error.message;
       }
