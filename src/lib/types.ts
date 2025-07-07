@@ -1,3 +1,4 @@
+
 export type Product = {
   id: string;
   name: string;
@@ -21,4 +22,9 @@ export type CartItem = {
   price: number;
   imageUrl: string;
   quantity: number;
+};
+
+export type AppUser = {
+  email: string;
+  role: 'admin' | 'customer';
 };
