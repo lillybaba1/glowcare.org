@@ -49,10 +49,17 @@ export default function RegisterPage() {
       toast({ title: 'Registration successful!', description: 'You are now logged in.' });
       router.push('/');
     } catch (error: any) {
+      let description = 'An error occurred. Please try again.';
+      if (error.message && error.message.toLowerCase().includes('permission denied')) {
+        description = 'Database permission error. Please ensure security rules are set correctly in your Firebase project.';
+      } else if (error.message) {
+        description = error.message;
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Registration failed',
-        description: error.message || 'An error occurred. Please try again.',
+        description,
       });
     } finally {
       setIsLoading(false);
