@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -17,13 +18,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { skincareChatbot } from "@/ai/flows/skincare-chatbot";
+import type { Product } from '@/lib/types';
 
 interface Message {
   role: "user" | "bot";
   content: string;
 }
 
-export default function Chatbot() {
+type ProductContext = Pick<Product, 'name' | 'description'> | null;
+
+export default function Chatbot({ productContext }: { productContext: ProductContext }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -43,12 +47,17 @@ export default function Chatbot() {
     if (!input.trim()) return;
 
     const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+
+    setMessages(newMessages);
     setInput("");
     setIsLoading(true);
 
     try {
-      const { response } = await skincareChatbot({ query: input });
+      const { response } = await skincareChatbot({ 
+        history: newMessages,
+        productContext: productContext || undefined,
+      });
       const botMessage: Message = { role: "bot", content: response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error: any) {

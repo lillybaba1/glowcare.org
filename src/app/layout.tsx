@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/context/CartProvider';
 import { AuthProvider } from '@/context/AuthProvider';
 import SiteLayout from '@/components/layout/SiteLayout';
+import { ChatbotProvider } from '@/context/ChatbotProvider';
 
 export const metadata: Metadata = {
   title: 'GlowCare Gambia - Authentic Skincare & Wellness',
@@ -29,8 +30,10 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <AuthProvider>
           <CartProvider>
-            <SiteLayout>{children}</SiteLayout>
-            <Toaster />
+            <ChatbotProvider>
+              <SiteLayout>{children}</SiteLayout>
+              <Toaster />
+            </ChatbotProvider>
           </CartProvider>
         </AuthProvider>
       </body>
