@@ -1,3 +1,4 @@
+
 import type { Product, Category } from './types';
 import { db } from './firebase';
 import { ref, get, child } from 'firebase/database';
@@ -49,7 +50,6 @@ export async function getProducts(): Promise<Product[]> {
     }
     return [];
   } catch (error) {
-    console.error("Error fetching products:", error);
     return [];
   }
 }
@@ -67,7 +67,6 @@ export async function getProductById(id: string): Promise<Product | undefined> {
     }
     return undefined;
   } catch (error) {
-    console.error(`Error fetching product with ID ${id}:`, error);
     return undefined;
   }
 }
