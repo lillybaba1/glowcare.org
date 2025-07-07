@@ -37,26 +37,26 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <Sparkles className="h-6 w-6 text-primary" />
+      <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+          <Sparkles className="h-7 w-7 text-primary" />
           <span className="font-headline">GlowCare Gambia</span>
         </Link>
 
         <nav className="hidden md:flex gap-6">
           {navLinks.map(link => (
-            <Link key={link.label} href={link.href} className="text-sm font-medium hover:text-primary transition-colors">
+            <Link key={link.label} href={link.href} className="text-base font-medium hover:text-primary transition-colors">
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
            <CartSheet>
             <Button variant="ghost" size="icon" className="relative">
-              <ShoppingBag className="h-5 w-5" />
+              <ShoppingBag className="h-6 w-6" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
                   {cartCount}
                 </span>
               )}
@@ -67,30 +67,30 @@ export default function Header() {
             {user ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                            <Avatar className="h-8 w-8">
+                        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                            <Avatar className="h-10 w-10">
                                 <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">My Account</p>
-                                <p className="text-xs leading-none text-muted-foreground">
+                            <div className="flex flex-col space-y-1 p-1">
+                                <p className="text-base font-medium leading-none">My Account</p>
+                                <p className="text-sm leading-none text-muted-foreground">
                                     {user.email}
                                 </p>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
-                            <LogOut className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={handleLogout} className="text-base p-2 cursor-pointer">
+                            <LogOut className="mr-2 h-5 w-5" />
                             <span>Log out</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             ) : (
-                <Button asChild variant="ghost">
+                <Button asChild variant="ghost" className="text-base">
                     <Link href="/login">Login</Link>
                 </Button>
             )}
@@ -98,7 +98,7 @@ export default function Header() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-6 w-6" />
+                <Menu className="h-7 w-7" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
@@ -107,18 +107,18 @@ export default function Header() {
                 <SheetTitle className="sr-only">Main Menu</SheetTitle>
               </SheetHeader>
               <div className="p-4">
-                <Link href="/" className="flex items-center gap-2 font-bold text-lg mb-8">
-                  <Sparkles className="h-6 w-6 text-primary" />
+                <Link href="/" className="flex items-center gap-2 font-bold text-xl mb-8">
+                  <Sparkles className="h-7 w-7 text-primary" />
                   <span className="font-headline">GlowCare Gambia</span>
                 </Link>
                 <nav className="grid gap-4">
                   {navLinks.map(link => (
-                    <Link key={link.label} href={link.href} className="text-lg font-medium hover:text-primary transition-colors">
+                    <Link key={link.label} href={link.href} className="text-xl font-medium hover:text-primary transition-colors">
                       {link.label}
                     </Link>
                   ))}
                    {!user && (
-                     <Link href="/login" className="text-lg font-medium hover:text-primary transition-colors">Login</Link>
+                     <Link href="/login" className="text-xl font-medium hover:text-primary transition-colors">Login</Link>
                   )}
                 </nav>
               </div>
