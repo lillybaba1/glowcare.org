@@ -1,19 +1,53 @@
 
+'use client';
+
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getProducts, getOrders } from "@/lib/data";
-import { ShoppingBag, DollarSign, Package } from "lucide-react";
+import { ShoppingBag, DollarSign, Package, Loader2 } from "lucide-react";
+import type { Order } from "@/lib/types";
+import type { Product } from "@/lib/types";
 
-export default async function AdminDashboardPage() {
-    const products = await getProducts();
-    const orders = await getOrders();
+export default function AdminDashboardPage() {
+    const [totalProducts, setTotalProducts] = useState(0);
+    const [totalSales, setTotalSales] = useState(0);
+    const [pendingOrders, setPendingOrders] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const totalProducts = products.length;
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const products: Product[] = await getProducts();
+                const orders: Order[] = await getOrders();
 
-    const totalSales = orders
-        .filter(order => order.orderStatus === 'Completed')
-        .reduce((sum, order) => sum + order.total, 0);
+                setTotalProducts(products.length);
 
-    const pendingOrders = orders.filter(order => order.orderStatus === 'Pending').length;
+                const sales = orders
+                    .filter(order => order.orderStatus === 'Completed')
+                    .reduce((sum, order) => sum + order.total, 0);
+                setTotalSales(sales);
+
+                const pending = orders.filter(order => order.orderStatus === 'Pending').length;
+                setPendingOrders(pending);
+
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchData();
+    }, []);
+
+
+    if (isLoading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
