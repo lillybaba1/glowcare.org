@@ -55,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         id: product.id,
         name: product.name,
         price: product.price,
-        imageUrl: product.imageUrls[0],
+        imageUrl: product.imageUrls?.[0] || 'https://placehold.co/128x128.png',
         quantity,
       };
       return [...prevItems, newItem];

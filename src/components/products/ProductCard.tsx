@@ -16,13 +16,14 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const isOutOfStock = product.stock !== undefined && product.stock === 0;
+  const imageUrl = product.imageUrls?.[0] || 'https://placehold.co/400x400.png';
 
   return (
     <Card className="flex flex-col overflow-hidden h-full group">
       <CardHeader className="p-0">
         <Link href={`/products/${product.id}`} className="block relative h-48 sm:h-64 w-full">
             <Image
-              src={product.imageUrls[0]}
+              src={imageUrl}
               alt={product.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
