@@ -1,17 +1,18 @@
 
 import ProductCard from '@/components/products/ProductCard';
-import { getProducts, categories } from '@/lib/data';
+import { getProducts, getCategories } from '@/lib/data';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductFilters from '@/components/products/ProductFilters';
 import type { Product } from '@/lib/types';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
-function ProductGrid({
+async function ProductGrid({
   searchParams,
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
+  const categories = await getCategories();
   const selectedCategory = searchParams?.category as string | undefined;
 
   return (

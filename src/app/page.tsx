@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductCard from '@/components/products/ProductCard';
-import { getProducts, categories, getHeroImageUrl, getHeroBackgroundColor, getHeroBackgroundImageUrl } from '@/lib/data';
+import { getProducts, getCategories, getHeroImageUrl, getHeroBackgroundColor, getHeroBackgroundImageUrl } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default async function Home() {
   const products = await getProducts();
+  const categories = await getCategories();
   const featuredProducts = products.filter(p => p.featured);
   const foregroundImageUrl = await getHeroImageUrl();
   const backgroundImageUrl = await getHeroBackgroundImageUrl();

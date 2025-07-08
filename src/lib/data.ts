@@ -1,10 +1,10 @@
 
 import type { Product, Category, Order, OrderStatus, PaymentStatus } from './types';
 import { db } from './firebase';
-import { ref, get, child, update } from 'firebase/database';
+import { ref, get, child, update, set } from 'firebase/database';
 
 
-export const categories: Category[] = [
+export const defaultCategories: Category[] = [
   {
     id: 'cat1',
     name: 'Sunscreens',
@@ -30,6 +30,57 @@ export const categories: Category[] = [
     dataAiHint: 'Serums'
   },
 ];
+
+
+/**
+ * Seeds the database with default categories if they don't exist.
+ */
+export async function seedInitialCategories() {
+    const categoriesRef = ref(db, 'categories');
+    const snapshot = await get(categoriesRef);
+    if (!snapshot.exists()) {
+        const categoriesToSeed: { [key: string]: Category } = {};
+        defaultCategories.forEach(cat => {
+            categoriesToSeed[cat.id] = cat;
+        });
+        await set(ref(db, 'categories'), categoriesToSeed);
+    }
+}
+
+/**
+ * Retrieves all product categories, fetching from DB and falling back to defaults.
+ * @returns An array of all categories.
+ */
+export async function getCategories(): Promise<Category[]> {
+    try {
+        const snapshot = await get(ref(db, 'categories'));
+        if (snapshot.exists()) {
+            const dbCategoriesObj = snapshot.val();
+            const dbCategories: Category[] = Object.values(dbCategoriesObj);
+            // Merge with defaults to ensure data integrity and order
+            return defaultCategories.map(defaultCat => {
+                const dbCat = dbCategories.find(c => c.id === defaultCat.id);
+                return { ...defaultCat, ...dbCat };
+            });
+        }
+        return defaultCategories; // Return defaults if node doesn't exist
+    } catch (error) {
+        console.error("Error fetching categories:", error);
+        return defaultCategories; // Fallback on error
+    }
+}
+
+/**
+ * Updates a category's image URL in the database.
+ * @param categoryId The ID of the category to update.
+ * @param imageUrl The new image URL.
+ */
+export async function updateCategoryImage(categoryId: string, imageUrl: string): Promise<void> {
+    const updates: { [key: string]: any } = {};
+    updates[`categories/${categoryId}/imageUrl`] = imageUrl;
+    return update(ref(db), updates);
+}
+
 
 /**
  * Retrieves all products from Firebase Realtime Database.

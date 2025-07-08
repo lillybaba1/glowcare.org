@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Upload, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import type { Product } from '@/lib/types';
+import type { Product, Category } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { categories } from '@/lib/data';
+import { getCategories } from '@/lib/data';
 import { db, storage } from '@/lib/firebase';
 import { ref as dbRef, push, set, update } from 'firebase/database';
 import { ref as storageRef, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
@@ -64,6 +64,7 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
   const isEditMode = !!productToEdit;
   const [isLoading, setIsLoading] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -80,6 +81,14 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
       featured: false,
     },
   });
+  
+  useEffect(() => {
+    const fetchCats = async () => {
+      const fetchedCategories = await getCategories();
+      setCategories(fetchedCategories);
+    }
+    fetchCats();
+  }, []);
 
   useEffect(() => {
     if (isEditMode && productToEdit) {
@@ -94,7 +103,7 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const currentUrls = previews;
+      const currentUrls = form.getValues('imageUrls');
       
       const filePromises = Array.from(files).map(file => {
         return new Promise<string>((resolve, reject) => {
@@ -111,22 +120,26 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
         setPreviews(updatedUrls);
       });
     }
+     if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
-    const updatedUrls = previews.filter((_, index) => index !== indexToRemove);
-    setPreviews(updatedUrls);
+    const currentUrls = form.getValues('imageUrls');
+    const updatedUrls = currentUrls.filter((_, index) => index !== indexToRemove);
     form.setValue('imageUrls', updatedUrls, { shouldValidate: true });
+    setPreviews(updatedUrls);
   };
 
   async function onSubmit(values: ProductFormValues) {
     setIsLoading(true);
     try {
-      const initialUrls = isEditMode && productToEdit ? productToEdit.imageUrls : [];
+      const initialUrls = (isEditMode && productToEdit?.imageUrls) ? productToEdit.imageUrls : [];
       const finalUrlOrDataUris = values.imageUrls;
 
       // 1. URLs to delete from storage
-      const urlsToDelete = (initialUrls || []).filter(url => !finalUrlOrDataUris.includes(url));
+      const urlsToDelete = initialUrls.filter(url => !finalUrlOrDataUris.includes(url));
       for (const urlToDelete of urlsToDelete) {
         if (urlToDelete.includes('firebasestorage.googleapis.com')) {
           const oldImageRef = storageRef(storage, urlToDelete);
