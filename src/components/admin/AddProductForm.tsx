@@ -169,7 +169,6 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
       }
       
       router.push('/admin/products');
-      router.refresh();
 
     } catch (error: any) {
       console.error("Error saving product:", error);
