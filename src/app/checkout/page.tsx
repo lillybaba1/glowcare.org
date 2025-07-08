@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { signInAnonymously } from 'firebase/auth';
-import { ref, push, set, runTransaction } from 'firebase/database';
+import { ref, push, set } from 'firebase/database';
 import { useAuth } from '@/hooks/use-auth';
 
 import { Button } from '@/components/ui/button';
@@ -92,18 +92,6 @@ export default function CheckoutPage() {
       // 1. Save the order to the database
       const newOrderRef = push(ref(db, 'orders'));
       await set(newOrderRef, orderData);
-
-      // 2. Atomically update stock for each product
-      for (const item of cartItems) {
-        const productRef = ref(db, `products/${item.id}`);
-        await runTransaction(productRef, (product) => {
-          if (product && typeof product.stock === 'number') {
-            // Ensure we don't go below zero
-            product.stock = Math.max(0, product.stock - item.quantity);
-          }
-          return product;
-        });
-      }
 
       toast({
         title: 'Order Placed!',
