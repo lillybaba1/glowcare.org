@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { ref, onValue } from "firebase/database";
 import type { Order } from "@/lib/types";
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -91,11 +93,11 @@ export default function AdminOrdersPage() {
                             <TableHead>Customer</TableHead>
                             <TableHead className="hidden md:table-cell">Date</TableHead>
                             <TableHead className="text-right">Total</TableHead>
-                            <TableHead className="text-right">Items</TableHead>
+                            <TableHead className="text-center">Items</TableHead>
                             <TableHead>Payment</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>
-                                <span className="sr-only">Actions</span>
+                            <TableHead className="text-right">
+                                Actions
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -115,11 +117,11 @@ export default function AdminOrdersPage() {
                                         {new Date(order.createdAt).toLocaleDateString()}
                                     </TableCell>
                                     <TableCell className="text-right">GMD {order.total.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right">{totalItems}</TableCell>
+                                    <TableCell className="text-center">{totalItems}</TableCell>
                                     <TableCell>{getStatusBadge(order.paymentStatus)}</TableCell>
                                     <TableCell>{getStatusBadge(order.orderStatus)}</TableCell>
-                                    <TableCell>
-                                      {/* Future: <Button asChild size="sm" variant="outline"><Link href={`/admin/orders/${order.id}`}>View</Link></Button> */}
+                                    <TableCell className="text-right">
+                                      <Button asChild size="sm" variant="outline"><Link href={`/admin/orders/${order.id}`}>View</Link></Button>
                                     </TableCell>
                                 </TableRow>
                             )})

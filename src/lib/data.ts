@@ -1,7 +1,7 @@
 
-import type { Product, Category, Order } from './types';
+import type { Product, Category, Order, OrderStatus, PaymentStatus } from './types';
 import { db } from './firebase';
-import { ref, get, child } from 'firebase/database';
+import { ref, get, child, update } from 'firebase/database';
 
 
 export const categories: Category[] = [
@@ -91,4 +91,35 @@ export async function getOrders(): Promise<Order[]> {
     console.error("Error fetching orders:", error);
     return [];
   }
+}
+
+/**
+ * Retrieves a single order by its ID from Firebase Realtime Database.
+ * @param id The ID of the order to retrieve.
+ * @returns The order if found, otherwise undefined.
+ */
+export async function getOrderById(id: string): Promise<Order | undefined> {
+  try {
+    const snapshot = await get(child(ref(db), `orders/${id}`));
+    if (snapshot.exists()) {
+      return { id, ...snapshot.val() };
+    }
+    return undefined;
+  } catch (error) {
+    console.error(`Error fetching order ${id}:`, error);
+    return undefined;
+  }
+}
+
+/**
+ * Updates the status of an order.
+ * @param orderId The ID of the order to update.
+ * @param statuses An object with the new orderStatus and/or paymentStatus.
+ */
+export async function updateOrderStatus(
+  orderId: string,
+  statuses: { orderStatus?: OrderStatus; paymentStatus?: PaymentStatus }
+) {
+  const orderRef = ref(db, `orders/${orderId}`);
+  return update(orderRef, statuses);
 }
