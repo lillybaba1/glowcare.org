@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { getOrderById, updateOrderStatus } from '@/lib/data';
 import { useEffect, useState } from 'react';
 import type { Order, OrderStatus, PaymentStatus } from '@/lib/types';
@@ -39,7 +39,9 @@ const getStatusBadge = (status: string) => {
     }
 };
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
+export default function OrderDetailsPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id;
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -49,8 +51,10 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const router = useRouter();
 
   useEffect(() => {
+    if (!id) return;
+
     async function fetchOrder() {
-      const fetchedOrder = await getOrderById(params.id);
+      const fetchedOrder = await getOrderById(id);
       if (fetchedOrder) {
         setOrder(fetchedOrder);
         setOrderStatus(fetchedOrder.orderStatus);
@@ -61,7 +65,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
       setIsLoading(false);
     }
     fetchOrder();
-  }, [params.id]);
+  }, [id]);
 
   const handleStatusUpdate = async () => {
       if (!order) return;
@@ -72,7 +76,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             title: "Status Updated",
             description: "The order status has been successfully updated.",
         });
-        const updatedOrder = await getOrderById(params.id);
+        const updatedOrder = await getOrderById(order.id);
         if (updatedOrder) {
             setOrder(updatedOrder);
         }
