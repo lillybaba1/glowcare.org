@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductCard from '@/components/products/ProductCard';
-import { getProducts, categories } from '@/lib/data';
+import { getProducts, categories, getHeroImageUrl } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 
 export default async function Home() {
   const products = await getProducts();
   const featuredProducts = products.filter(p => p.featured);
+  const heroImageUrl = await getHeroImageUrl();
+  const defaultHeroImage = "https://images.unsplash.com/photo-1663429312696-307edaa85c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnYW1iaWF8ZW58MHx8fHwxNzUxOTA3MjM0fDA&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <div className="flex flex-col">
@@ -33,11 +35,12 @@ export default async function Home() {
           </div>
           <div className="relative h-64 md:h-96 rounded-lg overflow-hidden shadow-2xl">
             <Image
-              src="https://images.unsplash.com/photo-1663429312696-307edaa85c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnYW1iaWF8ZW58MHx8fHwxNzUxOTA3MjM0fDA&ixlib=rb-4.1.0&q=80&w=1080"
+              src={heroImageUrl || defaultHeroImage}
               alt="Skincare products hero image"
               fill
               className="object-cover"
               data-ai-hint="skincare products"
+              priority
             />
           </div>
         </div>

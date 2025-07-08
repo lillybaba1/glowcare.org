@@ -123,3 +123,20 @@ export async function updateOrderStatus(
   const orderRef = ref(db, `orders/${orderId}`);
   return update(orderRef, statuses);
 }
+
+/**
+ * Retrieves the hero image URL from settings.
+ * @returns The hero image URL string if it exists, otherwise null.
+ */
+export async function getHeroImageUrl(): Promise<string | null> {
+  try {
+    const snapshot = await get(ref(db, 'settings/heroImageUrl'));
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching hero image URL:", error);
+    return null;
+  }
+}

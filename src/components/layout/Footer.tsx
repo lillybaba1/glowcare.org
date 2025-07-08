@@ -62,7 +62,10 @@ export default function Footer() {
               <ul className="space-y-2">
                 <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
                 {isAdmin && (
-                  <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Dashboard</Link></li>
+                  <>
+                    <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Dashboard</Link></li>
+                    <li><Link href="/admin/appearance" className="hover:text-primary transition-colors">Appearance</Link></li>
+                  </>
                 )}
               </ul>
             </div>
