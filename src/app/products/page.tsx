@@ -1,7 +1,7 @@
 
 import ProductCard from '@/components/products/ProductCard';
 import { getProducts, categories } from '@/lib/data';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductFilters from '@/components/products/ProductFilters';
 import type { Product } from '@/lib/types';
 import { Suspense } from 'react';
