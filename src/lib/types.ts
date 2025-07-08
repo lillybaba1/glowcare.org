@@ -39,6 +39,7 @@ export type Order = {
     name: string;
     phone: string;
     address: string;
+    userId?: string;
   };
   items: CartItem[];
   total: number;

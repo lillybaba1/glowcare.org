@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { ref, push, set, runTransaction } from 'firebase/database';
+import { useAuth } from '@/hooks/use-auth';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,20 +41,20 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart, cartCount } = useCart();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient && cartCount === 0) {
-      router.replace('/products');
+    if (!authLoading) {
+      if (!user) {
+        router.replace('/login?redirect=/checkout');
+      } else if (cartCount === 0) {
+        router.replace('/products');
+      }
     }
-  }, [isClient, cartCount, router]);
+  }, [user, authLoading, cartCount, router]);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -72,6 +73,7 @@ export default function CheckoutPage() {
         name: data.name,
         phone: data.phone,
         address: data.address,
+        userId: user?.uid,
       },
       items: cartItems,
       total: cartTotal,
@@ -116,7 +118,7 @@ export default function CheckoutPage() {
     }
   };
   
-  if (!isClient || (isClient && cartCount === 0)) {
+  if (authLoading || !user || cartCount === 0) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
