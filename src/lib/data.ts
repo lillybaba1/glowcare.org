@@ -26,8 +26,8 @@ export const categories: Category[] = [
   {
     id: 'cat4',
     name: 'Serums',
-    imageUrl: 'https://placehold.co/400x400.png',
-    dataAiHint: 'serum bottle'
+    imageUrl: 'https://images.unsplash.com/photo-1643379850274-77d2e3703ef9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOXx8U2VydW1zfGVufDB8fHx8MTc1MTk3MDgzMXww&ixlib=rb-4.1.0&q=80&w=1080',
+    dataAiHint: 'Serums'
   },
 ];
 
