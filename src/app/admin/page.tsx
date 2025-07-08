@@ -4,10 +4,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getProducts, getOrders } from "@/lib/data";
+import { db } from "@/lib/firebase";
+import { ref, onValue } from "firebase/database";
 import { ShoppingBag, DollarSign, Package, Loader2 } from "lucide-react";
-import type { Order } from "@/lib/types";
-import type { Product } from "@/lib/types";
+import type { Order, Product } from "@/lib/types";
 
 export default function AdminDashboardPage() {
     const [totalProducts, setTotalProducts] = useState(0);
@@ -16,29 +16,64 @@ export default function AdminDashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const products: Product[] = await getProducts();
-                const orders: Order[] = await getOrders();
+        const productsRef = ref(db, 'products');
+        const ordersRef = ref(db, 'orders');
 
-                setTotalProducts(products.length);
+        let productsLoaded = false;
+        let ordersLoaded = false;
 
-                const sales = orders
+        const checkAllDataLoaded = () => {
+            if (productsLoaded && ordersLoaded) {
+                setIsLoading(false);
+            }
+        };
+        
+        const productsUnsubscribe = onValue(productsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setTotalProducts(Object.keys(snapshot.val()).length);
+            } else {
+                setTotalProducts(0);
+            }
+            productsLoaded = true;
+            checkAllDataLoaded();
+        }, (error) => {
+            console.error("Firebase products read failed:", error);
+            productsLoaded = true;
+            checkAllDataLoaded();
+        });
+
+        const ordersUnsubscribe = onValue(ordersRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const ordersObject = snapshot.val();
+                const ordersArray: Order[] = Object.keys(ordersObject).map(key => ({
+                    id: key,
+                    ...ordersObject[key],
+                }));
+                
+                const sales = ordersArray
                     .filter(order => order.orderStatus === 'Completed')
                     .reduce((sum, order) => sum + order.total, 0);
                 setTotalSales(sales);
 
-                const pending = orders.filter(order => order.orderStatus === 'Pending').length;
+                const pending = ordersArray.filter(order => order.orderStatus === 'Pending').length;
                 setPendingOrders(pending);
-
-            } catch (error) {
-                console.error("Failed to fetch dashboard data:", error);
-            } finally {
-                setIsLoading(false);
+            } else {
+                setTotalSales(0);
+                setPendingOrders(0);
             }
-        }
+            ordersLoaded = true;
+            checkAllDataLoaded();
+        }, (error) => {
+            console.error("Firebase orders read failed:", error);
+            ordersLoaded = true;
+            checkAllDataLoaded();
+        });
 
-        fetchData();
+        // Cleanup function to detach listeners on component unmount
+        return () => {
+            productsUnsubscribe();
+            ordersUnsubscribe();
+        };
     }, []);
 
 
