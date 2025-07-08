@@ -29,3 +29,21 @@ export type AppUser = {
   email: string;
   isAdmin?: boolean;
 };
+
+export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Completed' | 'Cancelled';
+export type PaymentStatus = 'Unpaid' | 'Paid';
+
+export type Order = {
+  id: string;
+  customer: {
+    name: string;
+    phone: string;
+    address: string;
+  };
+  items: CartItem[];
+  total: number;
+  paymentMethod: 'wave' | 'cod';
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatus;
+  createdAt: number;
+};

@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { LayoutDashboard, ShoppingBag, PlusCircle, Sparkles, Loader2 } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, PlusCircle, Sparkles, Loader2, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 import {
@@ -58,6 +58,14 @@ export default function AdminLayout({
                     <Link href="/admin">
                         <LayoutDashboard />
                         Dashboard
+                    </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/admin/orders">
+                        <Package />
+                        Orders
                     </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

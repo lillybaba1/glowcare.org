@@ -8,12 +8,12 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { ref, push, set, runTransaction } from 'firebase/database';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Form,
@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, { message: 'Full name is required' }),
@@ -50,12 +50,10 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    // If on client and cart is empty, redirect away
     if (isClient && cartCount === 0) {
       router.replace('/products');
     }
   }, [isClient, cartCount, router]);
-  
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -66,26 +64,58 @@ export default function CheckoutPage() {
     },
   });
 
-
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsSubmitting(true);
-    // In a real app, you would send this data to your backend to create an order.
-    // For now, we'll simulate a successful order.
-    console.log('Order submitted:', { ...data, items: cartItems, total: cartTotal });
     
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+    const orderData = {
+      customer: {
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+      },
+      items: cartItems,
+      total: cartTotal,
+      paymentMethod: data.paymentMethod,
+      orderStatus: 'Pending' as const,
+      paymentStatus: 'Unpaid' as const,
+      createdAt: Date.now(),
+    };
 
-    toast({
-      title: 'Order Placed!',
-      description: 'Thank you for your purchase. We will contact you shortly.',
-    });
+    try {
+      // 1. Save the order to the database
+      const newOrderRef = push(ref(db, 'orders'));
+      await set(newOrderRef, orderData);
 
-    clearCart();
-    router.push('/');
-    // No need to set isSubmitting to false as we are navigating away
+      // 2. Atomically update stock for each product
+      for (const item of cartItems) {
+        const productRef = ref(db, `products/${item.id}`);
+        await runTransaction(productRef, (product) => {
+          if (product && typeof product.stock === 'number') {
+            // Ensure we don't go below zero
+            product.stock = Math.max(0, product.stock - item.quantity);
+          }
+          return product;
+        });
+      }
+
+      toast({
+        title: 'Order Placed!',
+        description: 'Thank you for your purchase. We have received your order.',
+      });
+
+      clearCart();
+      router.push('/');
+    } catch (error) {
+        console.error("Failed to place order:", error);
+        toast({
+            variant: "destructive",
+            title: "Order Failed",
+            description: "There was an issue placing your order. Please try again.",
+        });
+        setIsSubmitting(false);
+    }
   };
   
-  // Show loader until client-side hydration is complete and we know cart state
   if (!isClient || (isClient && cartCount === 0)) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -99,7 +129,6 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold mb-6">Checkout</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-3 gap-8 items-start">
-          {/* Customer and Payment Info */}
           <div className="md:col-span-2 space-y-8">
             <Card>
               <CardHeader>
@@ -190,7 +219,6 @@ export default function CheckoutPage() {
             </Card>
           </div>
 
-          {/* Order Summary */}
           <div className="md:col-span-1">
             <Card className="sticky top-24">
               <CardHeader>

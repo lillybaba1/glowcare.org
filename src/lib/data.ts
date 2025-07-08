@@ -1,5 +1,5 @@
 
-import type { Product, Category } from './types';
+import type { Product, Category, Order } from './types';
 import { db } from './firebase';
 import { ref, get, child } from 'firebase/database';
 
@@ -68,5 +68,27 @@ export async function getProductById(id: string): Promise<Product | undefined> {
     return undefined;
   } catch (error) {
     return undefined;
+  }
+}
+
+/**
+ * Retrieves all orders from Firebase Realtime Database.
+ * @returns An array of all orders.
+ */
+export async function getOrders(): Promise<Order[]> {
+  try {
+    const snapshot = await get(ref(db, 'orders'));
+    if (snapshot.exists()) {
+      const ordersObject = snapshot.val();
+      const ordersArray = Object.keys(ordersObject).map(key => ({
+        id: key,
+        ...ordersObject[key],
+      }));
+      return ordersArray.reverse();
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return [];
   }
 }
