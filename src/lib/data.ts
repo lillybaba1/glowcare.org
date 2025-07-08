@@ -140,3 +140,20 @@ export async function getHeroImageUrl(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Retrieves the hero background color from settings.
+ * @returns The hero background color string (hex code) if it exists, otherwise null.
+ */
+export async function getHeroBackgroundColor(): Promise<string | null> {
+  try {
+    const snapshot = await get(ref(db, 'settings/heroBackgroundColor'));
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching hero background color:", error);
+    return null;
+  }
+}

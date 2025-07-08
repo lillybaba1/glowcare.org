@@ -5,19 +5,23 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductCard from '@/components/products/ProductCard';
-import { getProducts, categories, getHeroImageUrl } from '@/lib/data';
+import { getProducts, categories, getHeroImageUrl, getHeroBackgroundColor } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 
 export default async function Home() {
   const products = await getProducts();
   const featuredProducts = products.filter(p => p.featured);
   const heroImageUrl = await getHeroImageUrl();
+  const heroBgColor = await getHeroBackgroundColor();
   const defaultHeroImage = "https://images.unsplash.com/photo-1663429312696-307edaa85c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnYW1iaWF8ZW58MHx8fHwxNzUxOTA3MjM0fDA&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative w-full bg-primary py-20 md:py-32">
+      <section
+        className="relative w-full bg-primary py-20 md:py-32"
+        style={heroBgColor ? { backgroundColor: heroBgColor } : {}}
+      >
         <div className="container mx-auto grid md:grid-cols-2 gap-8 items-center px-4 md:px-6">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-primary-foreground">
