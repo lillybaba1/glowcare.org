@@ -20,8 +20,8 @@ export const categories: Category[] = [
   {
     id: 'cat3',
     name: 'Moisturizers',
-    imageUrl: 'https://placehold.co/400x400.png',
-    dataAiHint: 'moisturizer jar'
+    imageUrl: 'https://images.unsplash.com/photo-1630398776959-6ff31b49df55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyMHx8TW9pc3R1cml6ZXJ8ZW58MHx8fHwxNzUxOTcwNzQ3fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    dataAiHint: 'Moisturizers'
   },
   {
     id: 'cat4',
