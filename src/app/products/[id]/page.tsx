@@ -35,15 +35,18 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
   const { id } = params;
   const product = await getProductById(id);
 
-  if (!product || !product.imageUrls || product.imageUrls.length === 0) {
+  if (!product) {
     notFound();
-    return null;
   }
   
   const allProducts = await getProducts();
   const relatedProducts = allProducts
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
+
+  const images = product.imageUrls && product.imageUrls.length > 0 
+    ? product.imageUrls 
+    : ['https://placehold.co/600x600.png'];
 
   return (
     <>
@@ -54,7 +57,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
             <div className="relative aspect-square bg-muted p-4 md:p-6">
                <Carousel className="w-full h-full">
                   <CarouselContent>
-                    {product.imageUrls.map((url, index) => (
+                    {images.map((url, index) => (
                       <CarouselItem key={index}>
                         <div className="relative aspect-square h-full w-full">
                           <Image
@@ -69,8 +72,12 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="absolute left-2" />
-                  <CarouselNext className="absolute right-2" />
+                  {images.length > 1 && (
+                    <>
+                      <CarouselPrevious className="absolute left-2" />
+                      <CarouselNext className="absolute right-2" />
+                    </>
+                  )}
                 </Carousel>
             </div>
             <div className="flex flex-col p-6 md:p-8 lg:p-10">
