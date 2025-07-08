@@ -47,14 +47,11 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.replace('/login?redirect=/checkout');
-      } else if (cartCount === 0) {
-        router.replace('/products');
-      }
+    // Redirect to products page if cart is empty after initial load
+    if (!authLoading && cartCount === 0) {
+      router.replace('/products');
     }
-  }, [user, authLoading, cartCount, router]);
+  }, [authLoading, cartCount, router]);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -73,7 +70,7 @@ export default function CheckoutPage() {
         name: data.name,
         phone: data.phone,
         address: data.address,
-        userId: user?.uid,
+        userId: user?.uid, // This will be undefined for guests, which is handled correctly by Firebase
       },
       items: cartItems,
       total: cartTotal,
@@ -118,7 +115,8 @@ export default function CheckoutPage() {
     }
   };
   
-  if (authLoading || !user || cartCount === 0) {
+  // Show a loader while auth state is resolving or if the cart is empty (and we're about to redirect)
+  if (authLoading || (!isSubmitting && cartCount === 0)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
