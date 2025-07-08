@@ -77,7 +77,7 @@ export default function AppearancePage() {
       }
     };
     fetchSettings();
-  }, [toast]);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, imageType: 'foreground' | 'background') => {
     const file = e.target.files?.[0];
