@@ -91,6 +91,7 @@ export default function AdminOrdersPage() {
                             <TableHead>Customer</TableHead>
                             <TableHead className="hidden md:table-cell">Date</TableHead>
                             <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="text-right">Items</TableHead>
                             <TableHead>Payment</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>
@@ -100,7 +101,9 @@ export default function AdminOrdersPage() {
                     </TableHeader>
                     <TableBody>
                         {orders.length > 0 ? (
-                            orders.map((order) => (
+                            orders.map((order) => {
+                                const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                                return (
                                 <TableRow key={order.id}>
                                     <TableCell>
                                         <div className="font-medium">{order.customer.name}</div>
@@ -112,16 +115,17 @@ export default function AdminOrdersPage() {
                                         {new Date(order.createdAt).toLocaleDateString()}
                                     </TableCell>
                                     <TableCell className="text-right">GMD {order.total.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">{totalItems}</TableCell>
                                     <TableCell>{getStatusBadge(order.paymentStatus)}</TableCell>
                                     <TableCell>{getStatusBadge(order.orderStatus)}</TableCell>
                                     <TableCell>
                                       {/* Future: <Button asChild size="sm" variant="outline"><Link href={`/admin/orders/${order.id}`}>View</Link></Button> */}
                                     </TableCell>
                                 </TableRow>
-                            ))
+                            )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     No orders found.
                                 </TableCell>
                             </TableRow>
