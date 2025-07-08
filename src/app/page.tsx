@@ -14,38 +14,43 @@ export default async function Home() {
   const heroImageUrl = await getHeroImageUrl();
   const heroBgColor = await getHeroBackgroundColor();
   const defaultHeroImage = "https://images.unsplash.com/photo-1663429312696-307edaa85c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnYW1iaWF8ZW58MHx8fHwxNzUxOTA3MjM0fDA&ixlib=rb-4.1.0&q=80&w=1080";
+  const finalHeroImageUrl = heroImageUrl || defaultHeroImage;
 
   const heroStyle: React.CSSProperties = {
-    // The background color will be a fallback if the image fails to load or isn't set
     backgroundColor: heroBgColor || 'hsl(var(--primary))',
   };
-
-  const finalHeroImageUrl = heroImageUrl || defaultHeroImage;
-  if (finalHeroImageUrl) {
-    heroStyle.backgroundImage = `url(${finalHeroImageUrl})`;
-  }
 
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
       <section
-        className="relative w-full bg-cover bg-center bg-no-repeat py-20 md:py-32"
+        className="relative w-full py-20 md:py-32"
         style={heroStyle}
       >
-        <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
-        <div className="relative container mx-auto px-4 md:px-6 text-center text-primary-foreground">
-          <div className="max-w-3xl mx-auto space-y-4">
-            <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-white">
-              Authentic Skincare for a Radiant You
-            </h1>
-            <p className="text-lg text-white/80">
-              Discover genuine, affordable skincare and wellness products in The Gambia.
-              Shine with confidence.
-            </p>
-            <div className="flex justify-center gap-4">
-              <Button asChild size="lg" variant="secondary">
-                <Link href="/products">Shop All Products</Link>
-              </Button>
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4 text-center md:text-left">
+              <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-primary-foreground">
+                Authentic Skincare for a Radiant You
+              </h1>
+              <p className="text-lg text-primary-foreground/80">
+                Discover genuine, affordable skincare and wellness products in The Gambia.
+                Shine with confidence.
+              </p>
+              <div className="flex justify-center md:justify-start gap-4">
+                <Button asChild size="lg" variant="secondary">
+                  <Link href="/products">Shop All Products</Link>
+                </Button>
+              </div>
+            </div>
+            <div className="relative h-80 w-full">
+              <Image
+                src={finalHeroImageUrl}
+                alt="Skincare products on display"
+                fill
+                className="object-cover rounded-lg shadow-xl"
+                data-ai-hint="skincare products"
+              />
             </div>
           </div>
         </div>
