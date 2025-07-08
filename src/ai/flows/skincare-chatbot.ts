@@ -95,6 +95,9 @@ const skincareChatbotFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      return { response: "I'm sorry, I'm not sure how to respond to that. Please try rephrasing your question." };
+    }
+    return output;
   }
 );
