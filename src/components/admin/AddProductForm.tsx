@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import type { Product } from '@/lib/types';
 
@@ -46,8 +46,8 @@ const formSchema = z.object({
   price: z.coerce.number().positive({
     message: 'Price must be a positive number.',
   }),
-  imageUrl: z.string().min(1, { // Can be a data URI or a regular URL now
-    message: 'Please upload a product image.',
+  imageUrls: z.array(z.string()).min(1, {
+    message: 'Please upload at least one product image.',
   }),
   category: z.string().min(1, { message: 'Please select a category.' }),
   stock: z.coerce.number().int().nonnegative({ message: 'Stock must be 0 or more.' }).default(0),
@@ -63,7 +63,7 @@ interface AddProductFormProps {
 export default function AddProductForm({ productToEdit }: AddProductFormProps) {
   const isEditMode = !!productToEdit;
   const [isLoading, setIsLoading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -74,7 +74,7 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
       name: '',
       description: '',
       price: 0,
-      imageUrl: '',
+      imageUrls: [],
       category: '',
       stock: 0,
       featured: false,
@@ -85,73 +85,91 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
     if (isEditMode && productToEdit) {
       form.reset({
         ...productToEdit,
-        stock: productToEdit.stock ?? 0, // Ensure stock has a default value
+        stock: productToEdit.stock ?? 0,
       });
-      setPreview(productToEdit.imageUrl);
+      setPreviews(productToEdit.imageUrls || []);
     }
   }, [isEditMode, productToEdit, form]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        form.setValue('imageUrl', result, { shouldValidate: true });
-        setPreview(result);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const currentUrls = form.getValues('imageUrls') || [];
+      
+      const filePromises = Array.from(files).map(file => {
+        return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(filePromises).then(newDataUris => {
+        const updatedUrls = [...currentUrls, ...newDataUris];
+        form.setValue('imageUrls', updatedUrls, { shouldValidate: true });
+        setPreviews(updatedUrls);
+      });
     }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    const updatedUrls = previews.filter((_, index) => index !== indexToRemove);
+    setPreviews(updatedUrls);
+    form.setValue('imageUrls', updatedUrls, { shouldValidate: true });
   };
 
   async function onSubmit(values: ProductFormValues) {
     setIsLoading(true);
     try {
-      let finalImageUrl = productToEdit?.imageUrl || '';
-      const isNewImage = values.imageUrl.startsWith('data:image/');
+      const initialUrls = isEditMode && productToEdit ? productToEdit.imageUrls : [];
+      const finalUrlOrDataUris = values.imageUrls;
 
-      // 1. Handle image upload if a new image was provided
-      if (isNewImage) {
-          // A. Delete old image if in edit mode and an old image exists
-          if (isEditMode && productToEdit.imageUrl.includes('firebasestorage.googleapis.com')) {
-              try {
-                  const oldImageRef = storageRef(storage, productToEdit.imageUrl);
-                  await deleteObject(oldImageRef);
-              } catch (error) {
-                  console.warn("Could not delete old image, it might not exist or there was an error:", error);
-              }
-          }
-
-          // B. Upload new image
-          const newImageRef = storageRef(storage, `products/${Date.now()}-${Math.random().toString(36).substring(2)}`);
-          const uploadResult = await uploadString(newImageRef, values.imageUrl, 'data_url');
-          finalImageUrl = await getDownloadURL(uploadResult.ref);
+      // 1. URLs to delete from storage
+      const urlsToDelete = initialUrls.filter(url => !finalUrlOrDataUris.includes(url));
+      for (const urlToDelete of urlsToDelete) {
+        if (urlToDelete.includes('firebasestorage.googleapis.com')) {
+          const oldImageRef = storageRef(storage, urlToDelete);
+          await deleteObject(oldImageRef).catch(err => console.warn("Failed to delete old image:", err));
+        }
       }
-      
+
+      // 2. Upload new images and collect all final URLs
+      const finalImageUrls = await Promise.all(
+        finalUrlOrDataUris.map(async (urlOrDataUri) => {
+          if (urlOrDataUri.startsWith('data:image/')) {
+            const newImageRef = storageRef(storage, `products/${Date.now()}-${Math.random().toString(36).substring(2)}`);
+            const uploadResult = await uploadString(newImageRef, urlOrDataUri, 'data_url');
+            return getDownloadURL(uploadResult.ref);
+          }
+          return urlOrDataUri; // It's an existing URL
+        })
+      );
+
       const productData = {
         ...values,
-        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls,
       };
 
-      // 2. Save product data to Realtime Database
+      // 3. Save product data to Realtime Database
       if (isEditMode) {
-          const productRef = dbRef(db, `products/${productToEdit.id}`);
-          await update(productRef, productData);
-          toast({
-              title: 'Product Updated!',
-              description: `${values.name} has been successfully updated.`,
-          });
+        const productRef = dbRef(db, `products/${productToEdit.id}`);
+        await update(productRef, productData);
+        toast({
+          title: 'Product Updated!',
+          description: `${values.name} has been successfully updated.`,
+        });
       } else {
-          const newProductRef = push(dbRef(db, 'products'));
-          await set(newProductRef, productData);
-          toast({
-              title: 'Product Added!',
-              description: `${values.name} has been successfully added.`,
-          });
+        const newProductRef = push(dbRef(db, 'products'));
+        await set(newProductRef, productData);
+        toast({
+          title: 'Product Added!',
+          description: `${values.name} has been successfully added.`,
+        });
       }
       
       router.push('/admin/products');
-      router.refresh(); // Force a refresh to show the new/updated product
+      router.refresh();
 
     } catch (error: any) {
       console.error("Error saving product:", error);
@@ -264,44 +282,53 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
         </div>
         <FormField
           control={form.control}
-          name="imageUrl"
+          name="imageUrls"
           render={() => (
             <FormItem>
-              <FormLabel>Product Image</FormLabel>
+              <FormLabel>Product Images</FormLabel>
               <FormControl>
-                <div className="flex items-center gap-4">
-                  {preview ? (
-                    <Image
-                      src={preview}
-                      alt="Product preview"
-                      width={80}
-                      height={80}
-                      className="rounded-md object-cover aspect-square"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-                      <Upload />
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                  {previews.map((src, index) => (
+                    <div key={src + index} className="relative group aspect-square">
+                      <Image
+                        src={src}
+                        alt={`Product preview ${index + 1}`}
+                        fill
+                        className="rounded-md object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
+                  ))}
+                  <div
+                    className="aspect-square w-full bg-muted rounded-md flex items-center justify-center text-muted-foreground border-2 border-dashed border-border cursor-pointer hover:bg-accent transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {preview ? 'Change Image' : 'Upload Image'}
-                  </Button>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                  />
+                    <div className="text-center p-2">
+                        <Upload className="mx-auto h-8 w-8"/>
+                        <span className="text-sm mt-2 block">Add Images</span>
+                    </div>
+                  </div>
                 </div>
               </FormControl>
               <FormDescription>
-                Upload an image for the product from your device.
+                Click to add one or more images. The first image will be the main display image.
               </FormDescription>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
               <FormMessage />
             </FormItem>
           )}

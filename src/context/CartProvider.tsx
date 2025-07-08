@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useState, useEffect, useCallback } from 'react';
@@ -54,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         id: product.id,
         name: product.name,
         price: product.price,
-        imageUrl: product.imageUrl,
+        imageUrl: product.imageUrls[0],
         quantity,
       };
       return [...prevItems, newItem];

@@ -9,6 +9,13 @@ import AddToCartButton from '@/components/products/AddToCartButton';
 import ProductViewContextSetter from '@/components/products/ProductViewContextSetter';
 import { Badge } from '@/components/ui/badge';
 import ProductCard from '@/components/products/ProductCard';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 const getStockBadge = (stock?: number) => {
   if (stock === undefined || stock === null) {
@@ -28,7 +35,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
   const { id } = params;
   const product = await getProductById(id);
 
-  if (!product) {
+  if (!product || !product.imageUrls || product.imageUrls.length === 0) {
     notFound();
     return null;
   }
@@ -44,15 +51,27 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
       <div className="container mx-auto px-4 md:px-6 py-8 md:py-12">
         <Card className="overflow-hidden">
           <div className="grid md:grid-cols-2">
-            <div className="relative aspect-square bg-muted">
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                data-ai-hint="skincare product"
-              />
+            <div className="relative aspect-square bg-muted p-4 md:p-6">
+               <Carousel className="w-full h-full">
+                  <CarouselContent>
+                    {product.imageUrls.map((url, index) => (
+                      <CarouselItem key={index}>
+                        <div className="relative aspect-square h-full w-full">
+                          <Image
+                            src={url}
+                            alt={`${product.name} image ${index + 1}`}
+                            fill
+                            className="object-contain rounded-md"
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            data-ai-hint="skincare product"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="absolute left-2" />
+                  <CarouselNext className="absolute right-2" />
+                </Carousel>
             </div>
             <div className="flex flex-col p-6 md:p-8 lg:p-10">
               <div className="flex-grow">

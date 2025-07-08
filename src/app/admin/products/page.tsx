@@ -79,10 +79,14 @@ export default function AdminProductsPage() {
 
     setIsDeleting(true);
     try {
-      // 1. Delete image from Firebase Storage if it's a storage URL
-      if (productToDelete.imageUrl.includes('firebasestorage.googleapis.com')) {
-          const imageRef = storageRef(storage, productToDelete.imageUrl);
-          await deleteObject(imageRef);
+      // 1. Delete all images from Firebase Storage
+      if (productToDelete.imageUrls && productToDelete.imageUrls.length > 0) {
+        for (const imageUrl of productToDelete.imageUrls) {
+          if (imageUrl.includes('firebasestorage.googleapis.com')) {
+            const imageRef = storageRef(storage, imageUrl);
+            await deleteObject(imageRef).catch(err => console.warn("Failed to delete image, it may not exist:", err));
+          }
+        }
       }
 
       // 2. Delete product from Realtime Database
@@ -171,7 +175,7 @@ export default function AdminProductsPage() {
                       alt="Product image"
                       className="aspect-square rounded-md object-cover"
                       height="64"
-                      src={product.imageUrl || 'https://placehold.co/64x64.png'}
+                      src={product.imageUrls?.[0] || 'https://placehold.co/64x64.png'}
                       width="64"
                     />
                   </TableCell>
@@ -226,7 +230,7 @@ export default function AdminProductsPage() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the product
-              "{productToDelete?.name}" and its image from the servers.
+              "{productToDelete?.name}" and its associated images from the servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

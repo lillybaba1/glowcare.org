@@ -22,7 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardHeader className="p-0">
         <Link href={`/products/${product.id}`} className="block relative h-48 sm:h-64 w-full">
             <Image
-              src={product.imageUrl}
+              src={product.imageUrls[0]}
               alt={product.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
