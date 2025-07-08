@@ -57,10 +57,13 @@ export async function getCategories(): Promise<Category[]> {
         if (snapshot.exists()) {
             const dbCategoriesObj = snapshot.val();
             const dbCategories: Category[] = Object.values(dbCategoriesObj);
-            // Merge with defaults to ensure data integrity and order
+            
+            // Merge with defaults, ensuring imageUrl is always a valid string.
             return defaultCategories.map(defaultCat => {
                 const dbCat = dbCategories.find(c => c.id === defaultCat.id);
-                return { ...defaultCat, ...dbCat };
+                // Prioritize DB image, but fallback to default if it's missing or invalid
+                const imageUrl = dbCat?.imageUrl || defaultCat.imageUrl;
+                return { ...defaultCat, ...dbCat, imageUrl };
             });
         }
         return defaultCategories; // Return defaults if node doesn't exist
