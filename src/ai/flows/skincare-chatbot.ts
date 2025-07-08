@@ -123,11 +123,22 @@ const skincareChatbotFlow = ai.defineFlow(
     inputSchema: SkincareChatbotInputSchema,
     outputSchema: SkincareChatbotOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    if (!output) {
-      return { response: "I'm sorry, I'm not sure how to respond to that. Please try rephrasing your question." };
+  async (input) => {
+    try {
+      const { output } = await prompt(input);
+      if (!output) {
+        return {
+          response:
+            "I'm sorry, I'm not sure how to respond to that. Please try rephrasing your question.",
+        };
+      }
+      return output;
+    } catch (error) {
+      console.error("Error in skincare chatbot flow:", error);
+      return {
+        response:
+          "I'm sorry, but I encountered an error while trying to generate a response. Please try again.",
+      };
     }
-    return output;
   }
 );
