@@ -9,7 +9,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { signInAnonymously } from 'firebase/auth';
 import { ref, push, set, runTransaction } from 'firebase/database';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -65,22 +66,29 @@ export default function CheckoutPage() {
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsSubmitting(true);
     
-    const orderData = {
-      customer: {
-        name: data.name,
-        phone: data.phone,
-        address: data.address,
-        userId: user?.uid, // This will be undefined for guests, which is handled correctly by Firebase
-      },
-      items: cartItems,
-      total: cartTotal,
-      paymentMethod: data.paymentMethod,
-      orderStatus: 'Pending' as const,
-      paymentStatus: 'Unpaid' as const,
-      createdAt: Date.now(),
-    };
-
     try {
+      let currentUser = user;
+      // If user is not logged in, sign them in anonymously to allow the DB write
+      if (!currentUser) {
+        const userCredential = await signInAnonymously(auth);
+        currentUser = userCredential.user;
+      }
+      
+      const orderData = {
+        customer: {
+          name: data.name,
+          phone: data.phone,
+          address: data.address,
+          userId: currentUser?.uid, // Will be defined for both guests and logged-in users
+        },
+        items: cartItems,
+        total: cartTotal,
+        paymentMethod: data.paymentMethod,
+        orderStatus: 'Pending' as const,
+        paymentStatus: 'Unpaid' as const,
+        createdAt: Date.now(),
+      };
+      
       // 1. Save the order to the database
       const newOrderRef = push(ref(db, 'orders'));
       await set(newOrderRef, orderData);
