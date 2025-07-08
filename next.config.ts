@@ -3,11 +3,9 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  devIndicators: {
-    allowedDevOrigins: [
-      '*.cloudworkstations.dev'
-    ]
-  },
+  allowedDevOrigins: [
+    '*.cloudworkstations.dev'
+  ],
   typescript: {
     ignoreBuildErrors: true,
   },
