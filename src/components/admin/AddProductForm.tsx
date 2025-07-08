@@ -94,7 +94,7 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const currentUrls = form.getValues('imageUrls') || [];
+      const currentUrls = previews;
       
       const filePromises = Array.from(files).map(file => {
         return new Promise<string>((resolve, reject) => {
@@ -126,7 +126,7 @@ export default function AddProductForm({ productToEdit }: AddProductFormProps) {
       const finalUrlOrDataUris = values.imageUrls;
 
       // 1. URLs to delete from storage
-      const urlsToDelete = initialUrls.filter(url => !finalUrlOrDataUris.includes(url));
+      const urlsToDelete = (initialUrls || []).filter(url => !finalUrlOrDataUris.includes(url));
       for (const urlToDelete of urlsToDelete) {
         if (urlToDelete.includes('firebasestorage.googleapis.com')) {
           const oldImageRef = storageRef(storage, urlToDelete);
