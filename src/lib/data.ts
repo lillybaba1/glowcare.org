@@ -125,13 +125,13 @@ export async function updateOrderStatus(
 }
 
 /**
- * Retrieves the hero image URL from settings.
+ * Retrieves the hero FOREGROUND image URL from settings.
  * @returns The hero image URL string if it exists, otherwise null.
  */
 export async function getHeroImageUrl(): Promise<string | null> {
   try {
     const snapshot = await get(ref(db, 'settings/heroImageUrl'));
-    if (snapshot.exists()) {
+    if (snapshot.exists() && snapshot.val()) {
       return snapshot.val();
     }
     return null;
@@ -140,6 +140,24 @@ export async function getHeroImageUrl(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Retrieves the hero BACKGROUND image URL from settings.
+ * @returns The hero background image URL string if it exists, otherwise null.
+ */
+export async function getHeroBackgroundImageUrl(): Promise<string | null> {
+  try {
+    const snapshot = await get(ref(db, 'settings/heroBackgroundImageUrl'));
+    if (snapshot.exists() && snapshot.val()) {
+      return snapshot.val();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching hero background image URL:", error);
+    return null;
+  }
+}
+
 
 /**
  * Retrieves the hero background color from settings.

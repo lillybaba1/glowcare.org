@@ -5,34 +5,33 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductCard from '@/components/products/ProductCard';
-import { getProducts, categories, getHeroImageUrl, getHeroBackgroundColor } from '@/lib/data';
+import { getProducts, categories, getHeroImageUrl, getHeroBackgroundColor, getHeroBackgroundImageUrl } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default async function Home() {
   const products = await getProducts();
   const featuredProducts = products.filter(p => p.featured);
-  const heroImageUrl = await getHeroImageUrl();
+  const foregroundImageUrl = await getHeroImageUrl();
+  const backgroundImageUrl = await getHeroBackgroundImageUrl();
   const heroBgColor = await getHeroBackgroundColor();
-  const defaultHeroImage = "https://images.unsplash.com/photo-1663429312696-307edaa85c68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnYW1iaWF8ZW58MHx8fHwxNzUxOTA3MjM0fDA&ixlib=rb-4.1.0&q=80&w=1080";
   
-  const foregroundImageUrl = heroImageUrl || defaultHeroImage;
-
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
       <section
         className="relative w-full py-20 md:py-32"
-        style={!heroImageUrl ? { backgroundColor: heroBgColor || 'hsl(var(--primary))' } : {}}
+        style={!backgroundImageUrl ? { backgroundColor: heroBgColor || 'hsl(var(--background))' } : {}}
       >
-        {heroImageUrl && (
+        {backgroundImageUrl && (
           <>
             <Image
-              src={heroImageUrl}
+              src={backgroundImageUrl}
               alt="Hero background"
               fill
               className="object-cover w-full h-full"
               aria-hidden="true"
+              priority
             />
             <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
           </>
@@ -43,13 +42,13 @@ export default async function Home() {
             <div className="space-y-4 text-center md:text-left">
               <h1 className={cn(
                 "text-4xl md:text-5xl font-headline font-bold tracking-tight",
-                heroImageUrl ? "text-white" : "text-primary-foreground"
+                backgroundImageUrl ? "text-white" : "text-foreground"
               )}>
                 Authentic Skincare for a Radiant You
               </h1>
               <p className={cn(
                 "text-lg",
-                heroImageUrl ? "text-neutral-200" : "text-primary-foreground/80"
+                backgroundImageUrl ? "text-neutral-200" : "text-primary-foreground/80"
               )}>
                 Discover genuine, affordable skincare and wellness products in The Gambia.
                 Shine with confidence.
@@ -60,15 +59,18 @@ export default async function Home() {
                 </Button>
               </div>
             </div>
-            <div className="relative h-80 w-full">
-              <Image
-                src={foregroundImageUrl}
-                alt="Skincare products on display"
-                fill
-                className="object-cover rounded-lg shadow-xl"
-                data-ai-hint="skincare products"
-              />
-            </div>
+            {foregroundImageUrl && (
+               <div className="relative h-80 w-full">
+                <Image
+                  src={foregroundImageUrl}
+                  alt="Skincare products on display"
+                  fill
+                  className="object-cover rounded-lg shadow-xl"
+                  data-ai-hint="skincare products"
+                  sizes="(max-width: 768px) 80vw, 40vw"
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>
