@@ -1,9 +1,9 @@
 
 'use client';
 
-import { notFound, useRouter, useParams } from 'next/navigation';
+import { notFound, useRouter, useParams, useSearchParams } from 'next/navigation';
 import { getOrderById, updateOrderStatus } from '@/lib/data';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import type { Order, OrderStatus, PaymentStatus } from '@/lib/types';
 
 import Image from 'next/image';
@@ -40,9 +40,11 @@ const getStatusBadge = (status: string) => {
     }
 };
 
-export default function OrderDetailsPage() {
+function OrderDetailsContent() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const id = params.id;
+  const userId = searchParams.get('userId');
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,10 +55,10 @@ export default function OrderDetailsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !userId) return;
 
     async function fetchOrder() {
-      const fetchedOrder = await getOrderById(id);
+      const fetchedOrder = await getOrderById(id, userId);
       if (fetchedOrder) {
         setOrder(fetchedOrder);
         setOrderStatus(fetchedOrder.orderStatus);
@@ -67,18 +69,18 @@ export default function OrderDetailsPage() {
       setIsLoading(false);
     }
     fetchOrder();
-  }, [id]);
+  }, [id, userId]);
 
   const handleStatusUpdate = async () => {
-      if (!order) return;
+      if (!order || !userId) return;
       setIsUpdating(true);
       try {
-        await updateOrderStatus(order.id, { orderStatus, paymentStatus });
+        await updateOrderStatus(order.id, userId, { orderStatus, paymentStatus });
         toast({
             title: "Status Updated",
             description: "The order status has been successfully updated.",
         });
-        const updatedOrder = await getOrderById(order.id);
+        const updatedOrder = await getOrderById(order.id, userId);
         if (updatedOrder) {
             setOrder(updatedOrder);
         }
@@ -101,11 +103,11 @@ export default function OrderDetailsPage() {
       </div>
     );
   }
-
+  
   if (!order) {
     return notFound();
   }
-  
+
   const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -275,5 +277,13 @@ export default function OrderDetailsPage() {
             </div>
         </div>
     </div>
+  );
+}
+
+export default function OrderDetailsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <OrderDetailsContent />
+    </Suspense>
   );
 }

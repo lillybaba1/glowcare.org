@@ -204,7 +204,7 @@ export default function CheckoutPage() {
         createdAt: Date.now(),
       };
       
-      const newOrderRef = push(ref(db, `orders`));
+      const newOrderRef = push(ref(db, `orders/${userId}`));
       await set(newOrderRef, orderData);
 
       await logAdminEvent('NEW_ORDER', `New order #${orderData.orderNumber} placed by ${data.name}.`, { orderId: newOrderRef.key, customerName: data.name, total: orderData.total });

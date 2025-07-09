@@ -44,7 +44,7 @@ export default function UserOrderDetailsPage() {
 
     async function fetchOrder() {
       const fetchedOrder = await getOrderById(id, user.uid);
-      // Security check: Make sure the logged-in user is the one who owns this order
+      // Security check is redundant due to new DB rules, but good for client-side safety
       if (fetchedOrder && fetchedOrder.customer.userId === user?.uid) {
         setOrder(fetchedOrder);
         setIsAuthorized(true);

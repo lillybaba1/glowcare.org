@@ -1,12 +1,11 @@
 
 import type { Order } from './types';
 import { db } from './firebase';
-import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 
 
 /**
  * Fetches all orders from the database. Intended for admin use only.
- * Firebase rules should restrict this to admins.
  * This function iterates through all user-nested orders.
  * @returns A promise that resolves to an array of all orders.
  */
@@ -15,26 +14,34 @@ export async function fetchAdminOrders(): Promise<Order[]> {
     const ordersRef = ref(db, 'orders');
     const snapshot = await get(ordersRef);
     if (snapshot.exists()) {
-      const allOrdersObject = snapshot.val();
-      const allOrders: Order[] = Object.keys(allOrdersObject).map(key => ({
-        id: key,
-        ...allOrdersObject[key]
-      }));
+      const allUsersOrders = snapshot.val(); // This is { userId1: { orderIdA: {...} }, userId2: ... }
+      const allOrders: Order[] = [];
       
-      // Sort all collected orders by creation date, newest first
+      Object.keys(allUsersOrders).forEach(userId => {
+        const userOrders = allUsersOrders[userId];
+        if (userOrders) {
+          Object.keys(userOrders).forEach(orderId => {
+              allOrders.push({
+                  id: orderId,
+                  ...userOrders[orderId],
+                  // Ensure the customer object has the userId, which is crucial for routing
+                  customer: { ...userOrders[orderId].customer, userId: userId }
+              });
+          });
+        }
+      });
+      
       return allOrders.sort((a, b) => b.createdAt - a.createdAt);
     }
     return [];
   } catch (error) {
     console.error("Error fetching admin orders:", error);
-    // This error will be caught by the calling component.
-    // It's likely a permission_denied error if a non-admin calls this.
     throw new Error("Failed to fetch all orders. You may not have permission.");
   }
 }
 
 /**
- * Fetches all orders for a specific user.
+ * Fetches all orders for a specific user from their designated path.
  * @param userId The UID of the user whose orders are to be fetched.
  * @returns A promise that resolves to an array of the user's orders.
  */
@@ -43,12 +50,8 @@ export async function fetchUserOrders(userId: string): Promise<Order[]> {
     return [];
   }
   try {
-    const ordersQuery = query(
-        ref(db, 'orders'),
-        orderByChild('customer/userId'),
-        equalTo(userId)
-    );
-    const snapshot = await get(ordersQuery);
+    const userOrdersRef = ref(db, `orders/${userId}`);
+    const snapshot = await get(userOrdersRef);
 
     if (snapshot.exists()) {
       const ordersObject = snapshot.val();
@@ -61,7 +64,6 @@ export async function fetchUserOrders(userId: string): Promise<Order[]> {
     return [];
   } catch (error) {
     console.error("Error fetching user orders:", error);
-    // This will be caught by the calling component to show a toast message.
     throw new Error("Could not fetch your orders. Please try again later.");
   }
 }

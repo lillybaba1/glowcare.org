@@ -20,11 +20,10 @@
       }
     },
     "orders": {
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('isAdmin').val() === true || (query.orderByChild === 'customer/userId' && query.equalTo === auth.uid))",
-      ".indexOn": "customer/userId",
-      "$orderId": {
-        ".read": "auth.uid != null && (data.child('customer/userId').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)",
-        ".write": "auth.uid != null && ((!data.exists() && newData.child('customer/userId').val() === auth.uid) || (data.exists() && root.child('users').child(auth.uid).child('isAdmin').val() === true))"
+      ".read": "auth != null && root.child('users').child(auth.uid).child('isAdmin').val() === true",
+      "$userId": {
+        ".read": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('isAdmin').val() === true)",
+        ".write": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('isAdmin').val() === true)"
       }
     },
     "events_log": {
