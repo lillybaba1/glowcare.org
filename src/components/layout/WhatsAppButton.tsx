@@ -1,5 +1,10 @@
+
+'use client';
+
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { getWhatsappNumber } from '@/lib/data';
 
 // WhatsApp SVG Icon
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -22,9 +27,20 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 export default function WhatsAppButton() {
-    // Replace with your actual WhatsApp number
-    const phoneNumber = "220XXXXXXX"; 
+    const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
     const message = "Hello GlowCare Gambia! I have a question.";
+
+    useEffect(() => {
+        const fetchNumber = async () => {
+            const number = await getWhatsappNumber();
+            setPhoneNumber(number);
+        };
+        fetchNumber();
+    }, []);
+
+    if (!phoneNumber) {
+        return null; // Don't render the button if no number is set in the admin panel
+    }
   
     return (
       <Button asChild size="icon" className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-[#25D366] hover:bg-[#128C7E] text-white">

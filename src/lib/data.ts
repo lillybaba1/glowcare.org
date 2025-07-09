@@ -258,3 +258,20 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
     throw new Error("Could not fetch your orders due to a database permission issue.");
   }
 }
+
+/**
+ * Retrieves the WhatsApp number from settings.
+ * @returns The WhatsApp number string if it exists, otherwise null.
+ */
+export async function getWhatsappNumber(): Promise<string | null> {
+  try {
+    const snapshot = await get(ref(db, 'settings/whatsappNumber'));
+    if (snapshot.exists() && snapshot.val()) {
+      return snapshot.val();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching WhatsApp number:", error);
+    return null;
+  }
+}

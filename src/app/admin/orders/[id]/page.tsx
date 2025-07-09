@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Phone } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -164,9 +164,17 @@ export default function OrderDetailsPage() {
                     <CardHeader>
                         <CardTitle>Customer Information</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
+                    <CardContent className="space-y-4 text-sm">
                         <p><strong>Name:</strong> {order.customer.name}</p>
-                        <p><strong>Phone:</strong> <a href={`tel:${order.customer.phone}`} className="underline">{order.customer.phone}</a></p>
+                        <div className="flex items-center gap-2">
+                           <strong>Phone:</strong> 
+                           <span>{order.customer.phone}</span>
+                           <Button asChild variant="outline" size="icon" className="h-7 w-7">
+                                <a href={`tel:${order.customer.phone}`} aria-label="Call customer">
+                                    <Phone className="h-4 w-4" />
+                                </a>
+                           </Button>
+                        </div>
                         <p><strong>Address:</strong> {order.customer.address}</p>
                     </CardContent>
                 </Card>

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { db, storage } from '@/lib/firebase';
-import { ref as dbRef, get, update, set } from 'firebase/database';
+import { ref as dbRef, get, update } from 'firebase/database';
 import { ref as storageRef, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,10 @@ export default function AppearancePage() {
   // State for background color
   const [heroBgColor, setHeroBgColor] = useState<string>('');
   const [initialHeroBgColor, setInitialHeroBgColor] = useState<string>('');
+  
+  // State for WhatsApp
+  const [whatsappNumber, setWhatsappNumber] = useState<string>('');
+  const [initialWhatsappNumber, setInitialWhatsappNumber] = useState<string>('');
 
   // State for categories
   const [categories, setCategories] = useState<Category[]>([]);
@@ -46,7 +50,7 @@ export default function AppearancePage() {
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
-        // Fetch hero settings
+        // Fetch settings
         const settingsRef = dbRef(db, 'settings');
         const snapshot = await get(settingsRef);
         if (snapshot.exists()) {
@@ -54,6 +58,7 @@ export default function AppearancePage() {
           const currentFgUrl = settings.heroImageUrl || '';
           const currentBgUrl = settings.heroBackgroundImageUrl || '';
           const currentBgColor = settings.heroBackgroundColor || '#E0FFFF';
+          const currentWhatsapp = settings.whatsappNumber || '';
 
           setForegroundImageUrl(currentFgUrl);
           setInitialForegroundImageUrl(currentFgUrl);
@@ -61,6 +66,8 @@ export default function AppearancePage() {
           setInitialBackgroundImageUrl(currentBgUrl);
           setHeroBgColor(currentBgColor);
           setInitialHeroBgColor(currentBgColor);
+          setWhatsappNumber(currentWhatsapp);
+          setInitialWhatsappNumber(currentWhatsapp);
         }
 
         // Fetch category settings
@@ -164,7 +171,7 @@ export default function AppearancePage() {
     }
   };
 
-  const hasChanges = newForegroundImage || newBackgroundImage || (heroBgColor !== initialHeroBgColor);
+  const hasChanges = newForegroundImage || newBackgroundImage || (heroBgColor !== initialHeroBgColor) || (whatsappNumber !== initialWhatsappNumber);
 
   const handleSave = async () => {
     if (!hasChanges) return;
@@ -195,6 +202,11 @@ export default function AppearancePage() {
       if (heroBgColor !== initialHeroBgColor) {
         updates.heroBackgroundColor = heroBgColor;
         setInitialHeroBgColor(heroBgColor);
+      }
+      
+      if (whatsappNumber !== initialWhatsappNumber) {
+        updates.whatsappNumber = whatsappNumber;
+        setInitialWhatsappNumber(whatsappNumber);
       }
 
       if (Object.keys(updates).length > 0) {
@@ -246,103 +258,126 @@ export default function AppearancePage() {
 
   return (
     <div className="grid auto-rows-max items-start gap-4 md:gap-8">
-      <h1 className="text-xl font-semibold tracking-tight">Appearance</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Homepage Customization</CardTitle>
-          <CardDescription>Customize the look and feel of your store's homepage hero section.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
-          ) : (
-            <>
-              <Uploader
-                id="foreground-image-upload"
-                label="Foreground Image"
-                description="This image appears on the right side of the hero section. Recommended size: 800x800 pixels."
-                displayImage={displayForegroundImage}
-                fileInputRef={foregroundFileInputRef}
-                onFileChange={(e: any) => handleFileChange(e, 'foreground')}
-                onRemove={() => handleRemoveImage('foreground')}
-                onTriggerClick={() => foregroundFileInputRef.current?.click()}
-              />
-              <Separator />
-              <Uploader
-                id="background-image-upload"
-                label="Background Image (Optional)"
-                description="This image will be the full background of the hero section. Recommended size: 1200x600 pixels."
-                displayImage={displayBackgroundImage}
-                fileInputRef={backgroundFileInputRef}
-                onFileChange={(e: any) => handleFileChange(e, 'background')}
-                onRemove={() => handleRemoveImage('background')}
-                onTriggerClick={() => backgroundFileInputRef.current?.click()}
-              />
-              <Separator />
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="hero-bg-color">Background Color</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Choose a background color. This will be used if no background image is set.
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Input id="hero-bg-color" type="color" value={heroBgColor} onChange={(e) => setHeroBgColor(e.target.value)} className="w-16 h-10 p-1 cursor-pointer" />
-                  <Input type="text" value={heroBgColor} onChange={(e) => setHeroBgColor(e.target.value)} className="max-w-[150px]" placeholder="#E0FFFF" />
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
-                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Changes
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between">
+         <h1 className="text-xl font-semibold tracking-tight">Appearance</h1>
+         <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Changes
+         </Button>
+      </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Customization</CardTitle>
-          <CardDescription>Customize the images for your product categories.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isCategoriesLoading ? (
-            <div className="flex items-center justify-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {categories.map((category) => (
-                <div key={category.id} className="space-y-3">
-                  <Label className="text-lg font-medium">{category.name}</Label>
-                  <div className="relative group aspect-video w-full rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground cursor-pointer hover:bg-accent transition-colors"
-                        onClick={() => categoryFileInputRefs.current[category.id]?.click()}>
-                    {isSaving ? (
-                         <Loader2 className="h-8 w-8 animate-spin" />
-                    ) : (
-                      <>
-                        <Image src={category.imageUrl} alt={category.name} fill className="object-cover rounded-lg" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                          <Upload className="h-10 w-10 text-white" />
-                        </div>
-                      </>
-                    )}
-                      <Input
-                          id={`category-upload-${category.id}`}
-                          ref={el => (categoryFileInputRefs.current[category.id] = el)}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleCategoryFileChange(e, category.id)}
-                          disabled={isSaving}
-                      />
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+      ) : (
+       <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Homepage Customization</CardTitle>
+              <CardDescription>Customize the look and feel of your store's homepage hero section.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+                <Uploader
+                  id="foreground-image-upload"
+                  label="Foreground Image"
+                  description="This image appears on the right side of the hero section. Recommended size: 800x800 pixels."
+                  displayImage={displayForegroundImage}
+                  fileInputRef={foregroundFileInputRef}
+                  onFileChange={(e: any) => handleFileChange(e, 'foreground')}
+                  onRemove={() => handleRemoveImage('foreground')}
+                  onTriggerClick={() => foregroundFileInputRef.current?.click()}
+                />
+                <Separator />
+                <Uploader
+                  id="background-image-upload"
+                  label="Background Image (Optional)"
+                  description="This image will be the full background of the hero section. Recommended size: 1200x600 pixels."
+                  displayImage={displayBackgroundImage}
+                  fileInputRef={backgroundFileInputRef}
+                  onFileChange={(e: any) => handleFileChange(e, 'background')}
+                  onRemove={() => handleRemoveImage('background')}
+                  onTriggerClick={() => backgroundFileInputRef.current?.click()}
+                />
+                <Separator />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="hero-bg-color">Background Color</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Choose a background color. This will be used if no background image is set.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Input id="hero-bg-color" type="color" value={heroBgColor} onChange={(e) => setHeroBgColor(e.target.value)} className="w-16 h-10 p-1 cursor-pointer" />
+                    <Input type="text" value={heroBgColor} onChange={(e) => setHeroBgColor(e.target.value)} className="max-w-[150px]" placeholder="#E0FFFF" />
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+          
+          <Card>
+             <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+                <CardDescription>Update contact details used across the site.</CardDescription>
+             </CardHeader>
+             <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="whatsapp-number">WhatsApp Number</Label>
+                    <p className="text-sm text-muted-foreground">
+                        Enter the number for the floating WhatsApp button. Include country code without '+'. E.g., 2201234567.
+                    </p>
+                    <Input
+                        id="whatsapp-number"
+                        type="text"
+                        value={whatsappNumber}
+                        onChange={(e) => setWhatsappNumber(e.target.value)}
+                        placeholder="e.g. 2201234567"
+                    />
+                </div>
+             </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Category Customization</CardTitle>
+              <CardDescription>Customize the images for your product categories.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isCategoriesLoading ? (
+                <div className="flex items-center justify-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {categories.map((category) => (
+                    <div key={category.id} className="space-y-3">
+                      <Label className="text-lg font-medium">{category.name}</Label>
+                      <div className="relative group aspect-video w-full rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground cursor-pointer hover:bg-accent transition-colors"
+                            onClick={() => categoryFileInputRefs.current[category.id]?.click()}>
+                        {isSaving ? (
+                             <Loader2 className="h-8 w-8 animate-spin" />
+                        ) : (
+                          <>
+                            <Image src={category.imageUrl} alt={category.name} fill className="object-cover rounded-lg" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                              <Upload className="h-10 w-10 text-white" />
+                            </div>
+                          </>
+                        )}
+                          <Input
+                              id={`category-upload-${category.id}`}
+                              ref={el => (categoryFileInputRefs.current[category.id] = el)}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleCategoryFileChange(e, category.id)}
+                              disabled={isSaving}
+                          />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
