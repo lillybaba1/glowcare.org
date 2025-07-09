@@ -1,7 +1,7 @@
 
 import type { Order } from './types';
 import { db } from './firebase';
-import { ref, get } from 'firebase/database';
+import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
 
 
 /**
@@ -15,20 +15,12 @@ export async function fetchAdminOrders(): Promise<Order[]> {
     const ordersRef = ref(db, 'orders');
     const snapshot = await get(ordersRef);
     if (snapshot.exists()) {
-      const allUsersOrders = snapshot.val();
-      const allOrders: Order[] = [];
+      const allOrdersObject = snapshot.val();
+      const allOrders: Order[] = Object.keys(allOrdersObject).map(key => ({
+        id: key,
+        ...allOrdersObject[key]
+      }));
       
-      // Iterate over each user's collection of orders
-      for (const userId in allUsersOrders) {
-        const userOrders = allUsersOrders[userId];
-        // Iterate over each order for that user
-        for (const orderId in userOrders) {
-          allOrders.push({
-            id: orderId,
-            ...userOrders[orderId],
-          });
-        }
-      }
       // Sort all collected orders by creation date, newest first
       return allOrders.sort((a, b) => b.createdAt - a.createdAt);
     }
@@ -42,7 +34,7 @@ export async function fetchAdminOrders(): Promise<Order[]> {
 }
 
 /**
- * Fetches all orders for a specific user from their dedicated path.
+ * Fetches all orders for a specific user.
  * @param userId The UID of the user whose orders are to be fetched.
  * @returns A promise that resolves to an array of the user's orders.
  */
@@ -51,8 +43,12 @@ export async function fetchUserOrders(userId: string): Promise<Order[]> {
     return [];
   }
   try {
-    const userOrdersRef = ref(db, `orders/${userId}`);
-    const snapshot = await get(userOrdersRef);
+    const ordersQuery = query(
+        ref(db, 'orders'),
+        orderByChild('customer/userId'),
+        equalTo(userId)
+    );
+    const snapshot = await get(ordersQuery);
 
     if (snapshot.exists()) {
       const ordersObject = snapshot.val();

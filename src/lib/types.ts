@@ -41,6 +41,8 @@ export type Order = {
     phone: string;
     address: string;
     userId: string;
+    idFrontUrl?: string;
+    idBackUrl?: string;
   };
   items: CartItem[];
   total: number;

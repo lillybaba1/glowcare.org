@@ -128,14 +128,13 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 }
 
 /**
- * Retrieves a single order by its ID from a user-specific path.
+ * Retrieves a single order by its ID from the root orders path.
  * @param id The ID of the order to retrieve.
- * @param userId The ID of the user who owns the order.
  * @returns The order if found, otherwise undefined.
  */
-export async function getOrderById(id: string, userId: string): Promise<Order | undefined> {
+export async function getOrderById(id: string): Promise<Order | undefined> {
   try {
-    const snapshot = await get(child(ref(db), `orders/${userId}/${id}`));
+    const snapshot = await get(child(ref(db), `orders/${id}`));
     if (snapshot.exists()) {
       return { id, ...snapshot.val() };
     }
@@ -149,16 +148,14 @@ export async function getOrderById(id: string, userId: string): Promise<Order | 
 /**
  * Updates the status of an order.
  * @param orderId The ID of the order to update.
- * @param userId The ID of the user who owns the order.
  * @param statuses An object with the new orderStatus and/or paymentStatus.
  */
 export async function updateOrderStatus(
   orderId: string,
-  userId: string,
   statuses: { orderStatus?: OrderStatus; paymentStatus?: PaymentStatus }
 ) {
   try {
-    const orderRef = ref(db, `orders/${userId}/${orderId}`);
+    const orderRef = ref(db, `orders/${orderId}`);
     return await update(orderRef, statuses);
   } catch (error) {
     console.error("Error updating order status:", error);

@@ -1,12 +1,13 @@
 
 'use client';
 
-import { notFound, useRouter, useParams, useSearchParams } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { getOrderById, updateOrderStatus } from '@/lib/data';
 import { useEffect, useState } from 'react';
 import type { Order, OrderStatus, PaymentStatus } from '@/lib/types';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -41,9 +42,7 @@ const getStatusBadge = (status: string) => {
 
 export default function OrderDetailsPage() {
   const params = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
   const id = params.id;
-  const userId = searchParams.get('userId');
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,10 +53,10 @@ export default function OrderDetailsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!id || !userId) return;
+    if (!id) return;
 
     async function fetchOrder() {
-      const fetchedOrder = await getOrderById(id, userId);
+      const fetchedOrder = await getOrderById(id);
       if (fetchedOrder) {
         setOrder(fetchedOrder);
         setOrderStatus(fetchedOrder.orderStatus);
@@ -68,18 +67,18 @@ export default function OrderDetailsPage() {
       setIsLoading(false);
     }
     fetchOrder();
-  }, [id, userId]);
+  }, [id]);
 
   const handleStatusUpdate = async () => {
-      if (!order || !order.customer.userId) return;
+      if (!order) return;
       setIsUpdating(true);
       try {
-        await updateOrderStatus(order.id, order.customer.userId, { orderStatus, paymentStatus });
+        await updateOrderStatus(order.id, { orderStatus, paymentStatus });
         toast({
             title: "Status Updated",
             description: "The order status has been successfully updated.",
         });
-        const updatedOrder = await getOrderById(order.id, order.customer.userId);
+        const updatedOrder = await getOrderById(order.id);
         if (updatedOrder) {
             setOrder(updatedOrder);
         }
@@ -181,6 +180,27 @@ export default function OrderDetailsPage() {
                         <p><strong>Address:</strong> {order.customer.address}</p>
                     </CardContent>
                 </Card>
+                 {order.customer.idFrontUrl && order.customer.idBackUrl && (
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>ID Verification Images</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <p className="font-medium text-sm">Front of ID</p>
+                                <Link href={order.customer.idFrontUrl} target="_blank" rel="noopener noreferrer" className="block relative aspect-video w-full rounded-lg border overflow-hidden">
+                                    <Image src={order.customer.idFrontUrl} alt="Front of ID" fill className="object-contain" />
+                                </Link>
+                            </div>
+                            <div className="space-y-2">
+                                <p className="font-medium text-sm">Back of ID</p>
+                                <Link href={order.customer.idBackUrl} target="_blank" rel="noopener noreferrer" className="block relative aspect-video w-full rounded-lg border overflow-hidden">
+                                     <Image src={order.customer.idBackUrl} alt="Back of ID" fill className="object-contain" />
+                                </Link>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
             <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
                  <Card>

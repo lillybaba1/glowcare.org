@@ -8,11 +8,13 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { db, auth } from '@/lib/firebase';
+import { useEffect, useState, useRef } from 'react';
+import { db, auth, storage } from '@/lib/firebase';
+import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 import { signInAnonymously } from 'firebase/auth';
-import { ref, push, set } from 'firebase/database';
+import { ref as dbRef, push, set } from 'firebase/database';
 import { useAuth } from '@/hooks/use-auth';
+import { verifyIdImages } from '@/ai/flows/verify-id-flow';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +29,7 @@ import {
 } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, Trash2 } from 'lucide-react';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, { message: 'Full name is required' }),
@@ -40,12 +42,31 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart, cartCount } = useCart();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const [idFrontFile, setIdFrontFile] = useState<File | null>(null);
+  const [idBackFile, setIdBackFile] = useState<File | null>(null);
+  const [idFrontPreview, setIdFrontPreview] = useState<string | null>(null);
+  const [idBackPreview, setIdBackPreview] = useState<string | null>(null);
+
+  const idFrontRef = useRef<HTMLInputElement>(null);
+  const idBackRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     // Redirect to products page if cart is empty after initial load
@@ -53,6 +74,35 @@ export default function CheckoutPage() {
       router.replace('/products');
     }
   }, [authLoading, cartCount, router]);
+  
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'front' | 'back') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      if (type === 'front') {
+        setIdFrontFile(file);
+        setIdFrontPreview(previewUrl);
+      } else {
+        setIdBackFile(file);
+        setIdBackPreview(previewUrl);
+      }
+    }
+  };
+  
+  const handleRemoveImage = (type: 'front' | 'back') => {
+    if (type === 'front') {
+      if (idFrontPreview) URL.revokeObjectURL(idFrontPreview);
+      setIdFrontFile(null);
+      setIdFrontPreview(null);
+      if(idFrontRef.current) idFrontRef.current.value = "";
+    } else {
+      if (idBackPreview) URL.revokeObjectURL(idBackPreview);
+      setIdBackFile(null);
+      setIdBackPreview(null);
+      if(idBackRef.current) idBackRef.current.value = "";
+    }
+  };
+
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -64,11 +114,52 @@ export default function CheckoutPage() {
   });
 
   const onSubmit = async (data: CheckoutFormValues) => {
-    setIsSubmitting(true);
+    if (!idFrontFile || !idBackFile) {
+        toast({
+            variant: "destructive",
+            title: "Missing Information",
+            description: "Please upload both the front and back of your ID.",
+        });
+        return;
+    }
     
+    setIsVerifying(true);
+    toast({ title: "Verifying ID...", description: "Our AI is checking your ID images for clarity. This may take a moment." });
+
+    try {
+        const idFrontDataUri = await fileToDataUri(idFrontFile);
+        const idBackDataUri = await fileToDataUri(idBackFile);
+        
+        const verification = await verifyIdImages({ idFrontDataUri, idBackDataUri });
+
+        if (!verification.isIdCard || !verification.isClear) {
+            toast({
+                variant: "destructive",
+                title: "ID Verification Failed",
+                description: verification.reason || "Please upload clearer images of your ID.",
+            });
+            setIsVerifying(false);
+            return;
+        }
+
+        toast({ title: "ID Verified!", description: "Thank you. Proceeding to place your order." });
+        setIsVerifying(false);
+
+    } catch (error) {
+        console.error("AI verification failed", error);
+        toast({
+            variant: "destructive",
+            title: "Verification Error",
+            description: "We couldn't verify your ID at this time. Please try again.",
+        });
+        setIsVerifying(false);
+        return;
+    }
+
+
+    setIsSubmitting(true);
     try {
       let currentUser = user;
-      // If user is not logged in, sign them in anonymously to allow the DB write
       if (!currentUser) {
         const userCredential = await signInAnonymously(auth);
         currentUser = userCredential.user;
@@ -77,6 +168,21 @@ export default function CheckoutPage() {
       const userId = currentUser.uid;
       const orderNumber = Math.random().toString(36).substring(2, 10).toUpperCase();
 
+      // Upload ID images
+      const frontImageRef = storageRef(storage, `id_cards/${userId}/${orderNumber}/front.jpg`);
+      const backImageRef = storageRef(storage, `id_cards/${userId}/${orderNumber}/back.jpg`);
+
+      const [frontUploadResult, backUploadResult] = await Promise.all([
+        uploadString(frontImageRef, idFrontPreview!, 'data_url'),
+        uploadString(backImageRef, idBackPreview!, 'data_url')
+      ]);
+
+      const [idFrontUrl, idBackUrl] = await Promise.all([
+        getDownloadURL(frontUploadResult.ref),
+        getDownloadURL(backUploadResult.ref)
+      ]);
+
+
       const orderData = {
         orderNumber: orderNumber,
         customer: {
@@ -84,6 +190,8 @@ export default function CheckoutPage() {
           phone: data.phone,
           address: data.address,
           userId: userId,
+          idFrontUrl,
+          idBackUrl,
         },
         items: cartItems,
         total: cartTotal,
@@ -93,8 +201,7 @@ export default function CheckoutPage() {
         createdAt: Date.now(),
       };
       
-      // 1. Save the order to the database under the user's own ID
-      const newOrderRef = push(ref(db, `orders/${userId}`));
+      const newOrderRef = push(ref(db, `orders`));
       await set(newOrderRef, orderData);
 
       toast({
@@ -115,7 +222,8 @@ export default function CheckoutPage() {
     }
   };
   
-  // Show a loader while auth state is resolving or if the cart is empty (and we're about to redirect)
+  const isLoading = isSubmitting || isVerifying || authLoading;
+
   if (authLoading || (!isSubmitting && cartCount === 0)) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -123,6 +231,31 @@ export default function CheckoutPage() {
       </div>
     );
   }
+  
+  const IDUploader = ({ id, label, description, preview, inputRef, onChange, onRemove }: any) => (
+    <div className="space-y-2">
+      <FormLabel>{label}</FormLabel>
+      <div className="relative group w-full h-48 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground cursor-pointer hover:bg-accent transition-colors"
+           onClick={() => !preview && inputRef.current?.click()}>
+        {preview ? (
+          <>
+            <Image src={preview} alt="ID preview" fill className="object-contain rounded-lg p-2" />
+            <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={onRemove}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </>
+        ) : (
+          <div className="text-center p-4">
+            <Upload className="mx-auto h-8 w-8" />
+            <span className="text-sm mt-2 block font-medium">Click to upload</span>
+          </div>
+        )}
+        <Input id={id} ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onChange} disabled={!!preview || isLoading} />
+      </div>
+      <FormMessage />
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
+  );
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8">
@@ -142,7 +275,7 @@ export default function CheckoutPage() {
                     <FormItem>
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Lamin B. Touray" {...field} />
+                        <Input placeholder="e.g. Lamin B. Touray" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,7 +288,7 @@ export default function CheckoutPage() {
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 220-XXX-XXXX" {...field} />
+                        <Input placeholder="e.g. 220-XXX-XXXX" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -168,13 +301,39 @@ export default function CheckoutPage() {
                     <FormItem>
                       <FormLabel>Delivery Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Kairaba Avenue, Serekunda" {...field} />
+                        <Input placeholder="e.g. Kairaba Avenue, Serekunda" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>ID Verification</CardTitle>
+                </CardHeader>
+                <CardContent className="grid sm:grid-cols-2 gap-6">
+                    <IDUploader 
+                        id="front-id-upload"
+                        label="Front of ID Card"
+                        description="Upload a clear picture of the front of your ID."
+                        preview={idFrontPreview}
+                        inputRef={idFrontRef}
+                        onChange={(e: any) => handleFileChange(e, 'front')}
+                        onRemove={() => handleRemoveImage('front')}
+                    />
+                    <IDUploader 
+                        id="back-id-upload"
+                        label="Back of ID Card"
+                        description="Upload a clear picture of the back of your ID."
+                        preview={idBackPreview}
+                        inputRef={idBackRef}
+                        onChange={(e: any) => handleFileChange(e, 'back')}
+                        onRemove={() => handleRemoveImage('back')}
+                    />
+                </CardContent>
             </Card>
 
             <Card>
@@ -192,6 +351,7 @@ export default function CheckoutPage() {
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                           className="flex flex-col space-y-2"
+                          disabled={isLoading}
                         >
                           <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4">
                             <FormControl>
@@ -247,9 +407,14 @@ export default function CheckoutPage() {
                   <span>GMD {cartTotal.toFixed(2)}</span>
                 </div>
                 <Separator />
-                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? (
+                <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+                  {isVerifying ? (
                     <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying ID...
+                    </>
+                  ) : isSubmitting ? (
+                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Placing Order...
                     </>
