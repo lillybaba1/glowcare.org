@@ -1,11 +1,6 @@
+
 {
   "rules": {
-    "users": {
-      "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)",
-        ".write": "auth != null && auth.uid === $uid"
-      }
-    },
     "products": {
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('isAdmin').val() === true"
@@ -18,12 +13,24 @@
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('isAdmin').val() === true"
     },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
     "orders": {
+      // Admins can read the full list of orders.
+      // Users can query for their own orders using their UID.
       ".read": "auth != null && (root.child('users').child(auth.uid).child('isAdmin').val() === true || (query.orderByChild === 'customer/userId' && query.equalTo === auth.uid))",
-      ".write": "auth != null && root.child('users').child(auth.uid).child('isAdmin').val() === true",
       ".indexOn": ["customer/userId"],
+      
       "$orderId": {
+        // A user can read their own order by its ID. An admin can read any order.
         ".read": "auth != null && (data.child('customer/userId').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)",
+        
+        // A user can only write a *new* order for themselves. Admins can write/update any order.
+        // This rule allows guest checkouts (with anonymous auth) and logged-in user checkouts.
         ".write": "auth != null && ((!data.exists() && newData.child('customer/userId').val() === auth.uid) || root.child('users').child(auth.uid).child('isAdmin').val() === true)"
       }
     }
