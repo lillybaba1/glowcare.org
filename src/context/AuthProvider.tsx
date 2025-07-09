@@ -47,12 +47,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           console.error("Failed to fetch or create user data:", error);
           setAppUser(null);
+        } finally {
+          // Ensure loading is set to false only after all async operations are complete.
+          setLoading(false);
         }
       } else {
         // User is signed out
         setAppUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
