@@ -4,9 +4,24 @@
 import Link from 'next/link';
 import { Sparkles, Instagram, Facebook, Twitter } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useEffect, useState } from 'react';
+import { getSocialMediaUrls } from '@/lib/data';
 
 export default function Footer() {
   const { isAdmin } = useAuth();
+  const [socialUrls, setSocialUrls] = useState({
+    facebook: '#',
+    instagram: '#',
+    twitter: '#',
+  });
+
+  useEffect(() => {
+    async function fetchUrls() {
+      const urls = await getSocialMediaUrls();
+      setSocialUrls(urls);
+    }
+    fetchUrls();
+  }, []);
 
   return (
     <footer className="bg-muted text-muted-foreground">
@@ -19,13 +34,13 @@ export default function Footer() {
             </Link>
             <p className="text-sm">Authentic skincare and wellness products delivered to your doorstep in The Gambia.</p>
             <div className="flex gap-4 mt-2">
-              <Link href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+              <Link href={socialUrls.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                 <Facebook className="h-6 w-6 hover:text-primary transition-colors" />
               </Link>
-              <Link href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <Link href={socialUrls.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <Instagram className="h-6 w-6 hover:text-primary transition-colors" />
               </Link>
-              <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+              <Link href={socialUrls.twitter} target="_blank" rel="noopener noreferrer" aria-label="Twitter">
                 <Twitter className="h-6 w-6 hover:text-primary transition-colors" />
               </Link>
             </div>
@@ -78,3 +93,5 @@ export default function Footer() {
     </footer>
   );
 }
+
+    

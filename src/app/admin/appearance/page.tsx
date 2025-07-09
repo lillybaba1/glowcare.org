@@ -34,6 +34,10 @@ export default function AppearancePage() {
   const [whatsappNumber, setWhatsappNumber] = useState<string>('');
   const [initialWhatsappNumber, setInitialWhatsappNumber] = useState<string>('');
 
+  // State for Social Media
+  const [socialUrls, setSocialUrls] = useState({ facebook: '', instagram: '', twitter: '' });
+  const [initialSocialUrls, setInitialSocialUrls] = useState({ facebook: '', instagram: '', twitter: '' });
+
   // State for categories
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
@@ -59,6 +63,7 @@ export default function AppearancePage() {
           const currentBgUrl = settings.heroBackgroundImageUrl || '';
           const currentBgColor = settings.heroBackgroundColor || '#E0FFFF';
           const currentWhatsapp = settings.whatsappNumber || '';
+          const currentSocials = settings.socialUrls || { facebook: '', instagram: '', twitter: '' };
 
           setForegroundImageUrl(currentFgUrl);
           setInitialForegroundImageUrl(currentFgUrl);
@@ -68,6 +73,8 @@ export default function AppearancePage() {
           setInitialHeroBgColor(currentBgColor);
           setWhatsappNumber(currentWhatsapp);
           setInitialWhatsappNumber(currentWhatsapp);
+          setSocialUrls(currentSocials);
+          setInitialSocialUrls(currentSocials);
         }
 
         // Fetch category settings
@@ -84,7 +91,7 @@ export default function AppearancePage() {
       }
     };
     fetchSettings();
-  }, []);
+  }, [toast]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, imageType: 'foreground' | 'background') => {
     const file = e.target.files?.[0];
@@ -171,7 +178,7 @@ export default function AppearancePage() {
     }
   };
 
-  const hasChanges = newForegroundImage || newBackgroundImage || (heroBgColor !== initialHeroBgColor) || (whatsappNumber !== initialWhatsappNumber);
+  const hasChanges = newForegroundImage || newBackgroundImage || (heroBgColor !== initialHeroBgColor) || (whatsappNumber !== initialWhatsappNumber) || (JSON.stringify(socialUrls) !== JSON.stringify(initialSocialUrls));
 
   const handleSave = async () => {
     if (!hasChanges) return;
@@ -207,6 +214,11 @@ export default function AppearancePage() {
       if (whatsappNumber !== initialWhatsappNumber) {
         updates.whatsappNumber = whatsappNumber;
         setInitialWhatsappNumber(whatsappNumber);
+      }
+
+      if (JSON.stringify(socialUrls) !== JSON.stringify(initialSocialUrls)) {
+        updates.socialUrls = socialUrls;
+        setInitialSocialUrls(socialUrls);
       }
 
       if (Object.keys(updates).length > 0) {
@@ -315,10 +327,10 @@ export default function AppearancePage() {
           
           <Card>
              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
-                <CardDescription>Update contact details used across the site.</CardDescription>
+                <CardTitle>Contact &amp; Social Media</CardTitle>
+                <CardDescription>Update contact details and social media links used across the site.</CardDescription>
              </CardHeader>
-             <CardContent className="space-y-4">
+             <CardContent className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="whatsapp-number">WhatsApp Number</Label>
                     <p className="text-sm text-muted-foreground">
@@ -331,6 +343,47 @@ export default function AppearancePage() {
                         onChange={(e) => setWhatsappNumber(e.target.value)}
                         placeholder="e.g. 2201234567"
                     />
+                </div>
+                <Separator />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Social Media Links</Label>
+                     <p className="text-sm text-muted-foreground">
+                        Enter the full URLs for your social media profiles.
+                    </p>
+                  </div>
+                   <div className="space-y-3">
+                     <div className="space-y-1">
+                        <Label htmlFor="facebook-url" className="text-sm font-normal">Facebook</Label>
+                        <Input
+                            id="facebook-url"
+                            type="url"
+                            value={socialUrls.facebook}
+                            onChange={(e) => setSocialUrls(prev => ({...prev, facebook: e.target.value}))}
+                            placeholder="https://facebook.com/your-page"
+                        />
+                     </div>
+                     <div className="space-y-1">
+                        <Label htmlFor="instagram-url" className="text-sm font-normal">Instagram</Label>
+                        <Input
+                            id="instagram-url"
+                            type="url"
+                            value={socialUrls.instagram}
+                            onChange={(e) => setSocialUrls(prev => ({...prev, instagram: e.target.value}))}
+                            placeholder="https://instagram.com/your-profile"
+                        />
+                     </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="twitter-url" className="text-sm font-normal">Twitter / X</Label>
+                        <Input
+                            id="twitter-url"
+                            type="url"
+                            value={socialUrls.twitter}
+                            onChange={(e) => setSocialUrls(prev => ({...prev, twitter: e.target.value}))}
+                            placeholder="https://twitter.com/your-handle"
+                        />
+                     </div>
+                   </div>
                 </div>
              </CardContent>
           </Card>
@@ -381,3 +434,5 @@ export default function AppearancePage() {
     </div>
   );
 }
+
+    

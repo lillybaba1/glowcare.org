@@ -275,3 +275,27 @@ export async function getWhatsappNumber(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Retrieves the social media URLs from settings.
+ * @returns An object with facebook, instagram, and twitter URLs.
+ */
+export async function getSocialMediaUrls(): Promise<{ facebook: string; instagram: string; twitter: string; }> {
+  const defaults = {
+    facebook: 'https://facebook.com',
+    instagram: 'https://instagram.com',
+    twitter: 'https://twitter.com',
+  };
+  try {
+    const snapshot = await get(ref(db, 'settings/socialUrls'));
+    if (snapshot.exists() && snapshot.val()) {
+      return { ...defaults, ...snapshot.val() };
+    }
+    return defaults;
+  } catch (error) {
+    console.error("Error fetching social media URLs:", error);
+    return defaults;
+  }
+}
+
+    
