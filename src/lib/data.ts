@@ -104,6 +104,7 @@ export async function getProducts(): Promise<Product[]> {
     }
     return [];
   } catch (error) {
+    console.error("Error fetching products:", error);
     return [];
   }
 }
@@ -121,6 +122,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
     }
     return undefined;
   } catch (error) {
+    console.error("Error fetching product by ID:", error);
     return undefined;
   }
 }
@@ -210,8 +212,13 @@ export async function updateOrderStatus(
   orderId: string,
   statuses: { orderStatus?: OrderStatus; paymentStatus?: PaymentStatus }
 ) {
-  const orderRef = ref(db, `orders/${orderId}`);
-  return update(orderRef, statuses);
+  try {
+    const orderRef = ref(db, `orders/${orderId}`);
+    return await update(orderRef, statuses);
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw new Error("Could not update order status. Please check permissions.");
+  }
 }
 
 /**

@@ -3,13 +3,18 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files (e.g., product images, category images)
-    // so they can be displayed on the website to all users.
+    // Allow public read access to all files.
+    // This is necessary for product images, category images, etc., to be
+    // visible to all users on the website.
     match /{allPaths=**} {
       allow read;
-      // Only allow authenticated users to upload or delete files.
-      // This protects your storage from unauthorized writes.
-      allow write: if request.auth != null;
+    }
+
+    // Restrict write access to only authenticated users.
+    // This prevents unauthorized users from uploading files.
+    // For enhanced security, you could restrict this further to only admins.
+    match /{allPaths=**} {
+        allow write: if request.auth != null;
     }
   }
 }
