@@ -1,6 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function TermsPage() {
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPageContent } from "@/lib/data";
+
+export default async function TermsPage() {
+  const content = await getPageContent('terms');
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-8">
       <Card>
@@ -8,7 +12,7 @@ export default function TermsPage() {
           <CardTitle>Terms of Service</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>This is the terms of service page. The rules and guidelines for using the website will be listed here.</p>
+          <p className="text-muted-foreground whitespace-pre-wrap">{content}</p>
         </CardContent>
       </Card>
     </div>

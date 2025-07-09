@@ -12,6 +12,7 @@ import { Loader2, Upload, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import type { Category } from '@/lib/types';
 import { getCategories, seedInitialCategories, updateCategoryImage } from '@/lib/data';
@@ -37,6 +38,10 @@ export default function AppearancePage() {
   // State for Social Media
   const [socialUrls, setSocialUrls] = useState({ facebook: '', instagram: '', twitter: '' });
   const [initialSocialUrls, setInitialSocialUrls] = useState({ facebook: '', instagram: '', twitter: '' });
+
+  // State for page content
+  const [pageContents, setPageContents] = useState({ contact: '', delivery: '', returns: '', privacy: '', terms: '' });
+  const [initialPageContents, setInitialPageContents] = useState({ contact: '', delivery: '', returns: '', privacy: '', terms: '' });
 
   // State for categories
   const [categories, setCategories] = useState<Category[]>([]);
@@ -64,6 +69,7 @@ export default function AppearancePage() {
           const currentBgColor = settings.heroBackgroundColor || '#E0FFFF';
           const currentWhatsapp = settings.whatsappNumber || '';
           const currentSocials = settings.socialUrls || { facebook: '', instagram: '', twitter: '' };
+          const currentPages = settings.pages || {};
 
           setForegroundImageUrl(currentFgUrl);
           setInitialForegroundImageUrl(currentFgUrl);
@@ -75,6 +81,16 @@ export default function AppearancePage() {
           setInitialWhatsappNumber(currentWhatsapp);
           setSocialUrls(currentSocials);
           setInitialSocialUrls(currentSocials);
+
+          const fetchedPageContents = {
+              contact: currentPages.contact || '',
+              delivery: currentPages.delivery || '',
+              returns: currentPages.returns || '',
+              privacy: currentPages.privacy || '',
+              terms: currentPages.terms || '',
+          };
+          setPageContents(fetchedPageContents);
+          setInitialPageContents(fetchedPageContents);
         }
 
         // Fetch category settings
@@ -91,7 +107,7 @@ export default function AppearancePage() {
       }
     };
     fetchSettings();
-  }, [toast]);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, imageType: 'foreground' | 'background') => {
     const file = e.target.files?.[0];
@@ -178,7 +194,7 @@ export default function AppearancePage() {
     }
   };
 
-  const hasChanges = newForegroundImage || newBackgroundImage || (heroBgColor !== initialHeroBgColor) || (whatsappNumber !== initialWhatsappNumber) || (JSON.stringify(socialUrls) !== JSON.stringify(initialSocialUrls));
+  const hasChanges = newForegroundImage || newBackgroundImage || (heroBgColor !== initialHeroBgColor) || (whatsappNumber !== initialWhatsappNumber) || (JSON.stringify(socialUrls) !== JSON.stringify(initialSocialUrls)) || (JSON.stringify(pageContents) !== JSON.stringify(initialPageContents));
 
   const handleSave = async () => {
     if (!hasChanges) return;
@@ -219,6 +235,11 @@ export default function AppearancePage() {
       if (JSON.stringify(socialUrls) !== JSON.stringify(initialSocialUrls)) {
         updates.socialUrls = socialUrls;
         setInitialSocialUrls(socialUrls);
+      }
+
+      if (JSON.stringify(pageContents) !== JSON.stringify(initialPageContents)) {
+        updates.pages = pageContents;
+        setInitialPageContents(pageContents);
       }
 
       if (Object.keys(updates).length > 0) {
@@ -387,6 +408,69 @@ export default function AppearancePage() {
                 </div>
              </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+                <CardTitle>Static Page Content</CardTitle>
+                <CardDescription>Update the content for your static pages like Contact, Delivery, etc.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <Label htmlFor="contact-content">Contact Us Page</Label>
+                    <Textarea
+                        id="contact-content"
+                        placeholder="Enter content for the Contact Us page..."
+                        value={pageContents.contact}
+                        onChange={(e) => setPageContents(prev => ({...prev, contact: e.target.value}))}
+                        rows={5}
+                    />
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                    <Label htmlFor="delivery-content">Delivery Info Page</Label>
+                    <Textarea
+                        id="delivery-content"
+                        placeholder="Enter content for the Delivery Info page..."
+                        value={pageContents.delivery}
+                        onChange={(e) => setPageContents(prev => ({...prev, delivery: e.target.value}))}
+                        rows={5}
+                    />
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                    <Label htmlFor="returns-content">Return Policy Page</Label>
+                    <Textarea
+                        id="returns-content"
+                        placeholder="Enter content for the Return Policy page..."
+                        value={pageContents.returns}
+                        onChange={(e) => setPageContents(prev => ({...prev, returns: e.target.value}))}
+                        rows={5}
+                    />
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                    <Label htmlFor="terms-content">Terms of Service Page</Label>
+                    <Textarea
+                        id="terms-content"
+                        placeholder="Enter content for the Terms of Service page..."
+                        value={pageContents.terms}
+                        onChange={(e) => setPageContents(prev => ({...prev, terms: e.target.value}))}
+                        rows={5}
+                    />
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                    <Label htmlFor="privacy-content">Privacy Policy Page</Label>
+                    <Textarea
+                        id="privacy-content"
+                        placeholder="Enter content for the Privacy Policy page..."
+                        value={pageContents.privacy}
+                        onChange={(e) => setPageContents(prev => ({...prev, privacy: e.target.value}))}
+                        rows={5}
+                    />
+                </div>
+            </CardContent>
+          </Card>
           
           <Card>
             <CardHeader>
@@ -434,5 +518,3 @@ export default function AppearancePage() {
     </div>
   );
 }
-
-    
