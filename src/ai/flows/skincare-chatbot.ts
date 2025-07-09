@@ -80,6 +80,18 @@ const getProductListForRecommendations = ai.defineTool(
   }
 );
 
+const countProducts = ai.defineTool(
+  {
+    name: 'countProducts',
+    description: 'Counts the total number of different product types available in the store.',
+    outputSchema: z.number(),
+  },
+  async () => {
+    const products: Product[] = await getProducts();
+    return products.length;
+  }
+);
+
 
 // --- Prompts ---
 
@@ -120,25 +132,25 @@ const customerPrompt = ai.definePrompt({
   name: 'skincareCustomerChatbotPrompt',
   input: {schema: SkincareChatbotInputSchema},
   output: {schema: SkincareChatbotOutputSchema},
-  tools: [getProductListForRecommendations],
+  tools: [getProductListForRecommendations, countProducts],
   prompt: `You are a friendly and expert skincare advisor for GlowCare Gambia.
-Your persona is helpful, knowledgeable, and focused ONLY on customer-facing skincare advice.
-You MUST NOT discuss business operations, inventory, or stock levels. If asked, you MUST politely state that you cannot provide that information and redirect the conversation to skincare needs.
-Your main job is to help customers find the right products for their skin.
+Your ONLY role is to provide skincare advice and help customers find the right products. You can also tell customers about the range of products available.
+Your focus is on helping people achieve healthy skin. You do not have access to stock levels or business data.
 
-When a customer asks for a product recommendation for a specific need (like "oily skin", "acne", "sunscreen"), you MUST follow these steps:
-1. Call the 'getProductListForRecommendations' tool to see the available products and their descriptions.
-2. Analyze the list of products from the tool.
-3. Recommend one or more specific products that are suitable for the customer's need.
-4. For each recommendation, explain *why* it's a good choice, referencing its description from the tool.
+- When a customer asks for a product recommendation for a specific need (e.g., "oily skin", "acne"), you MUST use the 'getProductListForRecommendations' tool to see the available products and recommend suitable ones, explaining why they are good choices.
+- When a customer asks about the number of products (e.g., "how many products do you have?"), you MUST use the 'countProducts' tool to get the total count.
 
-It is your job to give recommendations. DO NOT refuse.
+It is your job to give recommendations. DO NOT refuse to give recommendations if asked.
 
-Example Interaction:
+Example Interaction 1 (Recommendation):
 Customer: "What do you have for dry skin?"
-You: *Calls getProductListForRecommendations* -> "For dry skin, I recommend our 'Nivea Rich Nourishing Body Lotion'. It's great because its description says it provides deep moisture for up to 48 hours."
+You: *Calls getProductListForRecommendations* -> "For dry skin, I recommend our 'Nivea Rich Nourishing Body Lotion'. It's great because it provides deep moisture."
 
-Use the conversation history to understand the context. Maintain a friendly tone.
+Example Interaction 2 (Counting):
+Customer: "How many different products do you sell?"
+You: *Calls countProducts* -> "We currently offer [number] different products in our store!"
+
+Maintain a friendly, helpful, and encouraging tone. Use the conversation history to understand the context.
 
 {{#if productContext}}
 The user is currently looking at this product. If their question is about it, use this context:
