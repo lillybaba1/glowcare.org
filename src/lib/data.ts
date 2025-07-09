@@ -126,26 +126,62 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 }
 
 /**
- * Retrieves all orders from Firebase Realtime Database.
- * @returns An array of all orders.
+ * Fetches all orders from the database. Intended for admin use only.
+ * Firebase rules should restrict this to admins.
+ * @returns A promise that resolves to an array of all orders.
  */
-export async function getOrders(): Promise<Order[]> {
+export async function fetchAdminOrders(): Promise<Order[]> {
   try {
-    const snapshot = await get(ref(db, 'orders'));
+    const ordersRef = ref(db, 'orders');
+    const snapshot = await get(ordersRef);
     if (snapshot.exists()) {
       const ordersObject = snapshot.val();
       const ordersArray = Object.keys(ordersObject).map(key => ({
         id: key,
         ...ordersObject[key],
       }));
-      return ordersArray.reverse();
+      return ordersArray.reverse(); // Show newest first
     }
     return [];
   } catch (error) {
-    console.error("Error fetching orders:", error);
-    return [];
+    console.error("Error fetching admin orders:", error);
+    // This error will be caught by the calling component.
+    // It's likely a permission_denied error if a non-admin calls this.
+    throw new Error("Failed to fetch all orders. You may not have permission.");
   }
 }
+
+/**
+ * Fetches all orders for a specific user using a secure query.
+ * @param userId The UID of the user whose orders are to be fetched.
+ * @returns A promise that resolves to an array of the user's orders.
+ */
+export async function fetchUserOrders(userId: string): Promise<Order[]> {
+  if (!userId) {
+    return [];
+  }
+  try {
+    const ordersRef = ref(db, 'orders');
+    // This query is required by Firebase rules for non-admin users to read orders.
+    const userOrdersQuery = query(ordersRef, orderByChild('customer/userId'), equalTo(userId));
+    const snapshot = await get(userOrdersQuery);
+
+    if (snapshot.exists()) {
+      const ordersObject = snapshot.val();
+      const ordersArray = Object.keys(ordersObject).map(key => ({
+        id: key,
+        ...ordersObject[key],
+      }));
+      return ordersArray.reverse(); // Show newest first
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    // This will be caught by the calling component to show a toast message.
+    throw new Error("Could not fetch your orders. Please try again later.");
+  }
+}
+
 
 /**
  * Retrieves a single order by its ID from Firebase Realtime Database.
@@ -227,35 +263,6 @@ export async function getHeroBackgroundColor(): Promise<string | null> {
   } catch (error) {
     console.error("Error fetching hero background color:", error);
     return null;
-  }
-}
-
-/**
- * Retrieves all orders for a specific user from Firebase Realtime Database.
- * @param userId The UID of the user whose orders to retrieve.
- * @returns An array of the user's orders.
- */
-export async function getUserOrders(userId: string): Promise<Order[]> {
-  if (!userId) return [];
-  try {
-    const ordersRef = ref(db, 'orders');
-    const userOrdersQuery = query(ordersRef, orderByChild('customer/userId'), equalTo(userId));
-    const snapshot = await get(userOrdersQuery);
-
-    if (snapshot.exists()) {
-      const ordersObject = snapshot.val();
-      const ordersArray = Object.keys(ordersObject).map(key => ({
-        id: key,
-        ...ordersObject[key],
-      }));
-      return ordersArray.reverse();
-    }
-    return [];
-  } catch (error) {
-    console.error("Error fetching user orders:", error);
-    // In a real app, you might want to throw the error and handle it in the UI
-    // with a toast message to inform the user of the failure.
-    throw new Error("Could not fetch your orders due to a database permission issue.");
   }
 }
 

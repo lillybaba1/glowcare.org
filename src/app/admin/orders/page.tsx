@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { ref, onValue } from "firebase/database";
+import { fetchAdminOrders } from "@/lib/data";
 import type { Order } from "@/lib/types";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -29,25 +29,27 @@ import { Button } from "@/components/ui/button";
 export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
-        const ordersRef = ref(db, 'orders');
-        const unsubscribe = onValue(ordersRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const ordersObject = snapshot.val();
-                const ordersArray = Object.keys(ordersObject).map(key => ({
-                    id: key,
-                    ...ordersObject[key],
-                }));
-                setOrders(ordersArray.reverse());
-            } else {
-                setOrders([]);
+        const loadOrders = async () => {
+            setIsLoading(true);
+            try {
+                const allOrders = await fetchAdminOrders();
+                setOrders(allOrders);
+            } catch (error: any) {
+                toast({
+                    variant: "destructive",
+                    title: "Failed to load orders",
+                    description: error.message || "There was a problem fetching all orders.",
+                });
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
-        });
+        };
 
-        return () => unsubscribe();
-    }, []);
+        loadOrders();
+    }, [toast]);
 
     const getStatusBadge = (status: string) => {
         switch (status.toLowerCase()) {

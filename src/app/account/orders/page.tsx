@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { getUserOrders } from "@/lib/data";
+import { fetchUserOrders } from "@/lib/data";
 import type { Order } from "@/lib/types";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -35,10 +35,10 @@ export default function UserOrdersPage() {
 
     useEffect(() => {
         if (user) {
-            const fetchOrders = async () => {
+            const loadOrders = async () => {
                 setIsLoading(true);
                 try {
-                    const userOrders = await getUserOrders(user.uid);
+                    const userOrders = await fetchUserOrders(user.uid);
                     setOrders(userOrders);
                 } catch (error: any) {
                     toast({
@@ -50,7 +50,7 @@ export default function UserOrdersPage() {
                     setIsLoading(false);
                 }
             };
-            fetchOrders();
+            loadOrders();
         }
     }, [user, toast]);
     
