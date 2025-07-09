@@ -1,7 +1,7 @@
 
 import type { Product, Category, Order, OrderStatus, PaymentStatus } from './types';
 import { db } from './firebase';
-import { ref, get, child, update, set } from 'firebase/database';
+import { ref, get, child, update, set, query, orderByChild, equalTo } from 'firebase/database';
 
 
 export const defaultCategories: Category[] = [
@@ -227,5 +227,34 @@ export async function getHeroBackgroundColor(): Promise<string | null> {
   } catch (error) {
     console.error("Error fetching hero background color:", error);
     return null;
+  }
+}
+
+/**
+ * Retrieves all orders for a specific user from Firebase Realtime Database.
+ * @param userId The UID of the user whose orders to retrieve.
+ * @returns An array of the user's orders.
+ */
+export async function getUserOrders(userId: string): Promise<Order[]> {
+  if (!userId) return [];
+  try {
+    const ordersRef = ref(db, 'orders');
+    const userOrdersQuery = query(ordersRef, orderByChild('customer/userId'), equalTo(userId));
+    const snapshot = await get(userOrdersQuery);
+
+    if (snapshot.exists()) {
+      const ordersObject = snapshot.val();
+      const ordersArray = Object.keys(ordersObject).map(key => ({
+        id: key,
+        ...ordersObject[key],
+      }));
+      return ordersArray.reverse();
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    // In a real app, you might want to throw the error and handle it in the UI
+    // with a toast message to inform the user of the failure.
+    throw new Error("Could not fetch your orders due to a database permission issue.");
   }
 }

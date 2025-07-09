@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { LogOut, Menu, ShoppingBag, Sparkles } from 'lucide-react';
+import { LogOut, Menu, ShoppingBag, Sparkles, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useCart } from '@/hooks/use-cart';
@@ -83,6 +83,12 @@ export default function Header() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild className="text-base p-2 cursor-pointer">
+                            <Link href="/account/orders">
+                                <Package className="mr-2 h-5 w-5" />
+                                <span>My Orders</span>
+                            </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleLogout} className="text-base p-2 cursor-pointer">
                             <LogOut className="mr-2 h-5 w-5" />
                             <span>Log out</span>
