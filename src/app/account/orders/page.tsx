@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { fetchUserOrders } from "@/lib/data";
+import { fetchUserOrders } from "@/lib/fetchOrders";
 import type { Order } from "@/lib/types";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";

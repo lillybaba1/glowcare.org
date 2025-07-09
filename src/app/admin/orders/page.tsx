@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { fetchAdminOrders } from "@/lib/data";
+import { fetchAdminOrders } from "@/lib/fetchOrders";
 import type { Order } from "@/lib/types";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
