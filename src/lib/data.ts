@@ -301,7 +301,7 @@ export async function getSocialMediaUrls(): Promise<{ facebook: string; instagra
 /**
  * Retrieves the content for a specific static page from settings.
  * @param pageName The name of the page (e.g., 'contact', 'privacy').
- * @returns The page content string if it exists, otherwise a default message.
+ * @returns The page content string if it exists, otherwise an empty string.
  */
 export async function getPageContent(pageName: string): Promise<string> {
   try {
@@ -313,7 +313,6 @@ export async function getPageContent(pageName: string): Promise<string> {
     console.error(`Error fetching content for page "${pageName}":`, error);
   }
   
-  // Return a default message if not found or on error
-  const pageTitle = pageName.charAt(0).toUpperCase() + pageName.slice(1);
-  return `This is the ${pageTitle} page. Content can be edited in the Admin > Appearance section.`;
+  // Return an empty string if not found or on error
+  return '';
 }
