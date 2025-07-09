@@ -4,77 +4,56 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { db } from "@/lib/firebase";
-import { ref, onValue } from "firebase/database";
 import { ShoppingBag, DollarSign, Package, Loader2 } from "lucide-react";
-import type { Order, Product } from "@/lib/types";
+import { getProducts } from "@/lib/data";
+import { fetchAdminOrders } from "@/lib/fetchOrders";
+import { useToast } from "@/hooks/use-toast";
+import type { Order } from "@/lib/types";
 
 export default function AdminDashboardPage() {
     const [totalProducts, setTotalProducts] = useState(0);
     const [totalSales, setTotalSales] = useState(0);
     const [pendingOrders, setPendingOrders] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
-        const productsRef = ref(db, 'products');
-        const ordersRef = ref(db, 'orders');
+        async function fetchDashboardData() {
+            try {
+                const [products, allOrders] = await Promise.all([
+                    getProducts(),
+                    fetchAdminOrders()
+                ]);
 
-        let productsLoaded = false;
-        let ordersLoaded = false;
+                setTotalProducts(products.length);
 
-        const checkAllDataLoaded = () => {
-            if (productsLoaded && ordersLoaded) {
+                if (allOrders.length > 0) {
+                     const sales = allOrders
+                        .filter(order => order.orderStatus === 'Completed')
+                        .reduce((sum, order) => sum + order.total, 0);
+                    setTotalSales(sales);
+
+                    const pending = allOrders.filter(order => order.orderStatus === 'Pending').length;
+                    setPendingOrders(pending);
+                } else {
+                    setTotalSales(0);
+                    setPendingOrders(0);
+                }
+
+            } catch (error: any) {
+                console.error("Failed to fetch dashboard data:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Failed to load dashboard data",
+                    description: error.message || "There was a problem fetching dashboard statistics.",
+                });
+            } finally {
                 setIsLoading(false);
             }
-        };
-        
-        const productsUnsubscribe = onValue(productsRef, (snapshot) => {
-            if (snapshot.exists()) {
-                setTotalProducts(Object.keys(snapshot.val()).length);
-            } else {
-                setTotalProducts(0);
-            }
-            productsLoaded = true;
-            checkAllDataLoaded();
-        }, (error) => {
-            console.error("Firebase products read failed:", error);
-            productsLoaded = true;
-            checkAllDataLoaded();
-        });
+        }
 
-        const ordersUnsubscribe = onValue(ordersRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const ordersObject = snapshot.val();
-                const ordersArray: Order[] = Object.keys(ordersObject).map(key => ({
-                    id: key,
-                    ...ordersObject[key],
-                }));
-                
-                const sales = ordersArray
-                    .filter(order => order.orderStatus === 'Completed')
-                    .reduce((sum, order) => sum + order.total, 0);
-                setTotalSales(sales);
-
-                const pending = ordersArray.filter(order => order.orderStatus === 'Pending').length;
-                setPendingOrders(pending);
-            } else {
-                setTotalSales(0);
-                setPendingOrders(0);
-            }
-            ordersLoaded = true;
-            checkAllDataLoaded();
-        }, (error) => {
-            console.error("Firebase orders read failed:", error);
-            ordersLoaded = true;
-            checkAllDataLoaded();
-        });
-
-        // Cleanup function to detach listeners on component unmount
-        return () => {
-            productsUnsubscribe();
-            ordersUnsubscribe();
-        };
-    }, []);
+        fetchDashboardData();
+    }, [toast]);
 
 
     if (isLoading) {
