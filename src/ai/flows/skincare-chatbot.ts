@@ -30,6 +30,8 @@ const SkincareChatbotInputSchema = z.object({
     .optional()
     .describe('The product the user is currently viewing, if any.'),
   isAdmin: z.boolean().optional().describe('Whether the current user is an admin.'),
+  // This will be populated by the flow, not the client
+  productList: z.string().optional().describe('A list of available products.'),
 });
 export type SkincareChatbotInput = z.infer<typeof SkincareChatbotInputSchema>;
 
@@ -38,7 +40,7 @@ const SkincareChatbotOutputSchema = z.object({
 });
 export type SkincareChatbotOutput = z.infer<typeof SkincareChatbotOutputSchema>;
 
-export async function skincareChatbot(input: SkincareChatbotInput): Promise<SkincareChatbotOutput> {
+export async function skincareChatbot(input: Omit<SkincareChatbotInput, 'productList'>): Promise<SkincareChatbotOutput> {
   return skincareChatbotFlow(input);
 }
 
@@ -61,37 +63,6 @@ const getStoreInventory = ai.defineTool(
     return products.map(p => ({ name: p.name, stock: p.stock }));
   }
 );
-
-const getProductListForRecommendations = ai.defineTool(
-  {
-    name: 'getProductListForRecommendations',
-    description: 'Gets a formatted text list of all available products with their names and descriptions to help with customer recommendations.',
-    outputSchema: z.string(),
-  },
-  async () => {
-    const products: Product[] = await getProducts();
-    if (products.length === 0) {
-        return "There are currently no products available to recommend.";
-    }
-    // Format into a simple string for the model to parse easily
-    return products
-        .map(p => `Name: ${p.name}\nDescription: ${p.description}`)
-        .join('\n\n');
-  }
-);
-
-const countProducts = ai.defineTool(
-  {
-    name: 'countProducts',
-    description: 'Counts the total number of different product types available in the store.',
-    outputSchema: z.number(),
-  },
-  async () => {
-    const products: Product[] = await getProducts();
-    return products.length;
-  }
-);
-
 
 // --- Prompts ---
 
@@ -132,26 +103,25 @@ const customerPrompt = ai.definePrompt({
   name: 'skincareCustomerChatbotPrompt',
   input: {schema: SkincareChatbotInputSchema},
   output: {schema: SkincareChatbotOutputSchema},
-  tools: [getProductListForRecommendations, countProducts],
   prompt: `You are a friendly and expert skincare advisor for GlowCare Gambia.
 Your role is to provide skincare advice and help customers find the right products from our store.
 
 **CRITICAL INSTRUCTIONS:**
-1.  When a customer asks for a product recommendation for a specific need (e.g., "oily skin", "acne"), you **MUST** use the \`getProductListForRecommendations\` tool.
-2.  You **MUST ONLY** recommend products that are returned by the \`getProductListForRecommendations\` tool. This is your ONLY source of product information. Do not use your general knowledge.
-3.  If the tool returns "There are currently no products available to recommend.", you must inform the user of this.
-4.  If a customer asks if you have a product that is not on the list from the tool, you **MUST** state that it is not available.
-5.  For general questions about the number of products we sell, use the \`countProducts\` tool.
+1. You have been provided with a list of all available products in the store context below.
+2. When a customer asks for a product recommendation for a specific need (e.g., "oily skin", "acne"), you **MUST ONLY** recommend products from the provided product list.
+3. This list is your ONLY source of product information. Do not use your general knowledge.
+4. If the product list is empty, you must inform the user that there are no products available.
+5. If a customer asks if you have a product that is not on the list, you **MUST** state that it is not available.
 
-**DO NOT** invent products or claim we have products that are not on the list provided by the tool. Your knowledge is strictly limited to the tool's output.
+**DO NOT** invent products or claim we have products that are not on the list provided. Your knowledge is strictly limited to the provided product list.
 
-Example Interaction 1 (Recommendation):
+Example Interaction (Recommendation):
 Customer: "What do you have for dry skin?"
-You: *Calls getProductListForRecommendations, receives a list like "Name: CeraVe Moisturizing Cream\\nDescription:...", and then formulates the response.* -> "For dry skin, I recommend our 'CeraVe Moisturizing Cream'. It's great because it provides deep moisture."
+You: *Looks at the product list* -> "For dry skin, I recommend our 'CeraVe Moisturizing Cream'. It's great because it provides deep moisture."
 
-Example Interaction 2 (Product Not Found):
+Example Interaction (Product Not Found):
 Customer: "Do you have Neutrogena Hydro Boost?"
-You: *Calls getProductListForRecommendations, sees Neutrogena is not on the list.* -> "I'm sorry, we don't currently have the Neutrogena Hydro Boost in stock. However, for hydration, you might like our CeraVe Moisturizing Cream."
+You: *Looks at the product list, sees Neutrogena is not on it* -> "I'm sorry, we don't currently have the Neutrogena Hydro Boost in stock. However, for hydration, you might like our CeraVe Moisturizing Cream."
 
 Maintain a friendly, helpful, and encouraging tone. Use the conversation history to understand the context.
 
@@ -160,6 +130,9 @@ The user is currently looking at this product. If their question is about it, us
 - Product Name: {{productContext.name}}
 - Product Description: {{productContext.description}}
 {{/if}}
+
+AVAILABLE PRODUCT LIST:
+{{{productList}}}
 
 CONVERSATION HISTORY:
 {{#each history}}
@@ -178,6 +151,19 @@ const skincareChatbotFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+      // For customers, we fetch product data and pass it into the prompt.
+      // This is more reliable than using a tool for data that is always needed.
+      if (!input.isAdmin) {
+        const products = await getProducts();
+        if (products.length === 0) {
+          input.productList = "There are currently no products available to recommend.";
+        } else {
+          input.productList = products
+            .map(p => `Name: ${p.name}\nDescription: ${p.description}`)
+            .join('\n\n');
+        }
+      }
+
       const promptToUse = input.isAdmin ? adminPrompt : customerPrompt;
       const { output } = await promptToUse(input);
 
