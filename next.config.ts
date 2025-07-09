@@ -42,6 +42,7 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  serverComponentsExternalPackages: ['firebase'],
 };
 
 export default nextConfig;
