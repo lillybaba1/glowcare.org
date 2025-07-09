@@ -34,15 +34,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     // Use polling for file watching in development to avoid issues in some containerized environments.
     config.watchOptions = {
       poll: 1000,
       aggregateTimeout: 300,
     };
+
+    // Exclude firebase from being bundled on the server.
+    if (isServer) {
+        config.externals = [...(config.externals || []), 'firebase'];
+    }
+
     return config;
   },
-  serverComponentsExternalPackages: ['firebase'],
 };
 
 export default nextConfig;
