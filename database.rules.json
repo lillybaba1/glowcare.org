@@ -1,3 +1,4 @@
+
 {
   "rules": {
     "products": {
@@ -24,6 +25,11 @@
         ".read": "auth.uid != null && (data.child('customer/userId').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)",
         ".write": "auth.uid != null && ((!data.exists() && newData.child('customer/userId').val() === auth.uid) || (data.exists() && root.child('users').child(auth.uid).child('isAdmin').val() === true))"
       }
+    },
+    "events_log": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('isAdmin').val() === true",
+      ".write": "auth != null",
+      ".indexOn": "createdAt"
     }
   }
 }

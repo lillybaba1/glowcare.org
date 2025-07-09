@@ -13,6 +13,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { ref, query, limitToLast, get } from 'firebase/database';
 
 
 const MessageSchema = z.object({
@@ -64,23 +66,68 @@ const getStoreInventory = ai.defineTool(
   }
 );
 
+const getAdminEventsLog = ai.defineTool(
+  {
+    name: 'getAdminEventsLog',
+    description: 'Retrieves a log of recent, important store events like new orders, new user registrations, or failed ID verifications. Use this to answer questions about store activity.',
+    outputSchema: z.array(z.object({
+        createdAt: z.number(),
+        type: z.string(),
+        message: z.string(),
+    }))
+  },
+  async () => {
+    try {
+        const eventsRef = ref(db, 'events_log');
+        const eventsQuery = query(eventsRef, limitToLast(20));
+        const snapshot = await get(eventsQuery);
+        if (snapshot.exists()) {
+            const eventsObj = snapshot.val();
+            const eventsArray = Object.keys(eventsObj).map(key => ({
+                id: key,
+                ...eventsObj[key],
+            }));
+            // Return a simplified version for the AI, newest first
+            return eventsArray.map(e => ({
+                createdAt: e.createdAt,
+                type: e.type,
+                message: e.message
+            })).reverse();
+        }
+        return [];
+    } catch (e) {
+        console.error("Tool getAdminEventsLog failed:", e);
+        // Let the AI know it failed.
+        return [{ createdAt: Date.now(), type: 'TOOL_ERROR', message: 'Failed to fetch events log. There might be a database permission error.' }];
+    }
+  }
+);
+
 // --- Prompts ---
 
 const adminPrompt = ai.definePrompt({
   name: 'skincareAdminChatbotPrompt',
   input: {schema: SkincareChatbotInputSchema},
   output: {schema: SkincareChatbotOutputSchema},
-  tools: [getStoreInventory],
+  tools: [getStoreInventory, getAdminEventsLog],
   prompt: `You are a business operations assistant for GlowCare Gambia's store administrator.
 Your persona is strictly professional and data-focused.
-Your ONLY role is to provide direct, factual answers to internal questions about the store's inventory and products.
-You MUST NOT engage in general chat or skincare advice.
-When asked about stock levels or inventory, you MUST use the 'getStoreInventory' tool to fetch the required data.
-Provide the information retrieved from the tool directly and efficiently. Do not add conversational fluff.
+Your roles are:
+1. Provide direct, factual answers to internal questions about the store's inventory and products using the 'getStoreInventory' tool.
+2. Report on recent store activity by using the 'getAdminEventsLog' tool. This log tracks new orders, user sign-ups, and failed ID verifications.
 
-Example Interaction:
+When asked about stock levels or inventory, you MUST use the 'getStoreInventory' tool.
+When asked general questions about "what's happening", "recent activity", "new users", or "any issues", you MUST use the 'getAdminEventsLog' tool.
+
+Provide the information retrieved from the tools directly and efficiently. Do not add conversational fluff.
+
+Example Inventory Interaction:
 Admin: "How many CeraVe cleansers are in stock?"
 You: *Calls getStoreInventory* -> "There are 25 CeraVe Foaming Cleansers in stock."
+
+Example Activity Interaction:
+Admin: "What's the latest activity?"
+You: *Calls getAdminEventsLog* -> "At 10:45 AM, a new order #A4F8K9B2 was placed by John Doe. At 10:42 AM, a user failed ID verification."
 
 Use the conversation history to understand the context. Do not repeat greetings in every message. Get straight to the point.
 

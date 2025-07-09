@@ -15,6 +15,7 @@ import { signInAnonymously } from 'firebase/auth';
 import { ref as dbRef, push, set } from 'firebase/database';
 import { useAuth } from '@/hooks/use-auth';
 import { verifyIdImages } from '@/ai/flows/verify-id-flow';
+import { logAdminEvent } from '@/lib/logging';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -133,6 +134,7 @@ export default function CheckoutPage() {
         const verification = await verifyIdImages({ idFrontDataUri, idBackDataUri });
 
         if (!verification.isIdCard || !verification.isClear) {
+            await logAdminEvent('ID_VERIFICATION_FAILED', `ID verification failed for user attempt. Reason: ${verification.reason}`, { name: data.name, phone: data.phone });
             toast({
                 variant: "destructive",
                 title: "ID Verification Failed",
@@ -147,6 +149,7 @@ export default function CheckoutPage() {
 
     } catch (error) {
         console.error("AI verification failed", error);
+        await logAdminEvent('ID_VERIFICATION_FAILED', 'The AI verification service encountered an unexpected error.', { name: data.name, phone: data.phone });
         toast({
             variant: "destructive",
             title: "Verification Error",
@@ -203,6 +206,8 @@ export default function CheckoutPage() {
       
       const newOrderRef = push(ref(db, `orders`));
       await set(newOrderRef, orderData);
+
+      await logAdminEvent('NEW_ORDER', `New order #${orderData.orderNumber} placed by ${data.name}.`, { orderId: newOrderRef.key, customerName: data.name, total: orderData.total });
 
       toast({
         title: 'Order Placed!',

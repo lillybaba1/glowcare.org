@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { logAdminEvent } from '@/lib/logging';
 
 const registerSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -47,6 +48,8 @@ export default function RegisterPage() {
         email: data.email,
         isAdmin: isAdmin,
       });
+
+      await logAdminEvent('NEW_USER_REGISTRATION', `New user registered: ${data.email}.`, { userId: userCredential.user.uid, email: data.email, isAdmin });
 
       toast({ title: 'Registration successful!', description: 'You are now logged in.' });
       router.push('/');
