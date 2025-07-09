@@ -133,7 +133,7 @@ export default function AdminOrdersPage() {
                     <TableBody>
                         {filteredOrders.length > 0 ? (
                             filteredOrders.map((order) => {
-                                const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                                const totalItems = Array.isArray(order.items) ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
                                 return (
                                 <TableRow key={order.id}>
                                     <TableCell className="font-mono text-xs">{order.orderNumber}</TableCell>
