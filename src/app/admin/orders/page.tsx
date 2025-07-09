@@ -123,7 +123,7 @@ export default function AdminOrdersPage() {
                                     <TableCell>{getStatusBadge(order.paymentStatus)}</TableCell>
                                     <TableCell>{getStatusBadge(order.orderStatus)}</TableCell>
                                     <TableCell className="text-right">
-                                      <Button asChild size="sm" variant="outline"><Link href={`/admin/orders/${order.id}`}>View</Link></Button>
+                                      <Button asChild size="sm" variant="outline"><Link href={`/admin/orders/${order.id}?userId=${order.customer.userId}`}>View</Link></Button>
                                     </TableCell>
                                 </TableRow>
                             )})

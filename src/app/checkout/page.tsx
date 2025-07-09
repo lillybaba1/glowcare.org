@@ -74,12 +74,14 @@ export default function CheckoutPage() {
         currentUser = userCredential.user;
       }
       
+      const userId = currentUser.uid;
+
       const orderData = {
         customer: {
           name: data.name,
           phone: data.phone,
           address: data.address,
-          userId: currentUser?.uid, // Will be defined for both guests and logged-in users
+          userId: userId,
         },
         items: cartItems,
         total: cartTotal,
@@ -89,8 +91,8 @@ export default function CheckoutPage() {
         createdAt: Date.now(),
       };
       
-      // 1. Save the order to the database
-      const newOrderRef = push(ref(db, 'orders'));
+      // 1. Save the order to the database under the user's own ID
+      const newOrderRef = push(ref(db, `orders/${userId}`));
       await set(newOrderRef, orderData);
 
       toast({

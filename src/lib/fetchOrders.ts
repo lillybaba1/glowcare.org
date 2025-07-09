@@ -1,12 +1,13 @@
 
 import type { Order } from './types';
 import { db } from './firebase';
-import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 
 
 /**
  * Fetches all orders from the database. Intended for admin use only.
  * Firebase rules should restrict this to admins.
+ * This function iterates through all user-nested orders.
  * @returns A promise that resolves to an array of all orders.
  */
 export async function fetchAdminOrders(): Promise<Order[]> {
@@ -14,12 +15,22 @@ export async function fetchAdminOrders(): Promise<Order[]> {
     const ordersRef = ref(db, 'orders');
     const snapshot = await get(ordersRef);
     if (snapshot.exists()) {
-      const ordersObject = snapshot.val();
-      const ordersArray = Object.keys(ordersObject).map(key => ({
-        id: key,
-        ...ordersObject[key],
-      }));
-      return ordersArray.reverse(); // Show newest first
+      const allUsersOrders = snapshot.val();
+      const allOrders: Order[] = [];
+      
+      // Iterate over each user's collection of orders
+      for (const userId in allUsersOrders) {
+        const userOrders = allUsersOrders[userId];
+        // Iterate over each order for that user
+        for (const orderId in userOrders) {
+          allOrders.push({
+            id: orderId,
+            ...userOrders[orderId],
+          });
+        }
+      }
+      // Sort all collected orders by creation date, newest first
+      return allOrders.sort((a, b) => b.createdAt - a.createdAt);
     }
     return [];
   } catch (error) {
@@ -31,7 +42,7 @@ export async function fetchAdminOrders(): Promise<Order[]> {
 }
 
 /**
- * Fetches all orders for a specific user using a secure query.
+ * Fetches all orders for a specific user from their dedicated path.
  * @param userId The UID of the user whose orders are to be fetched.
  * @returns A promise that resolves to an array of the user's orders.
  */
@@ -40,10 +51,8 @@ export async function fetchUserOrders(userId: string): Promise<Order[]> {
     return [];
   }
   try {
-    const ordersRef = ref(db, 'orders');
-    // This query is required by Firebase rules for non-admin users to read orders.
-    const userOrdersQuery = query(ordersRef, orderByChild('customer/userId'), equalTo(userId));
-    const snapshot = await get(userOrdersQuery);
+    const userOrdersRef = ref(db, `orders/${userId}`);
+    const snapshot = await get(userOrdersRef);
 
     if (snapshot.exists()) {
       const ordersObject = snapshot.val();
