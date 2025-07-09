@@ -146,7 +146,7 @@ export default function AdminOrdersPage() {
                                     <TableCell className="hidden md:table-cell">
                                         {new Date(order.createdAt).toLocaleDateString()}
                                     </TableCell>
-                                    <TableCell className="text-right">GMD {order.total.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">GMD {(order.total || 0).toFixed(2)}</TableCell>
                                     <TableCell className="text-center">{totalItems}</TableCell>
                                     <TableCell>{getStatusBadge(order.paymentStatus)}</TableCell>
                                     <TableCell>{getStatusBadge(order.orderStatus)}</TableCell>
