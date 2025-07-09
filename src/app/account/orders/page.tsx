@@ -87,7 +87,7 @@ export default function UserOrdersPage() {
                  <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Order ID</TableHead>
+                            <TableHead>Order #</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead className="text-right">Total</TableHead>
                             <TableHead>Status</TableHead>
@@ -98,7 +98,7 @@ export default function UserOrdersPage() {
                         {orders.length > 0 ? (
                             orders.map((order) => (
                                 <TableRow key={order.id}>
-                                    <TableCell className="font-mono text-xs">{order.id.substring(0, 8)}...</TableCell>
+                                    <TableCell className="font-mono text-xs">{order.orderNumber}</TableCell>
                                     <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">GMD {order.total.toFixed(2)}</TableCell>
                                     <TableCell>{getStatusBadge(order.orderStatus)}</TableCell>

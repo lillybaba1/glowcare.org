@@ -34,7 +34,8 @@ export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Completed' | '
 export type PaymentStatus = 'Unpaid' | 'Paid';
 
 export type Order = {
-  id: string;
+  id: string; // This is the Firebase push() key
+  orderNumber: string; // This is the user-facing random ID
   customer: {
     name: string;
     phone: string;

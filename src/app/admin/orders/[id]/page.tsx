@@ -119,8 +119,8 @@ export default function OrderDetailsPage() {
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
                 Order Details
             </h1>
-            <Badge variant="outline" className="ml-auto sm:ml-0">
-                ID: {order.id.substring(0, 8)}...
+            <Badge variant="outline" className="ml-auto sm:ml-0 font-mono">
+                #{order.orderNumber}
             </Badge>
         </div>
 

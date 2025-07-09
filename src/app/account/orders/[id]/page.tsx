@@ -73,7 +73,7 @@ export default function UserOrderDetailsPage() {
       <CardHeader>
         <CardTitle>Order Details</CardTitle>
         <CardDescription>
-            Order ID: <span className="font-mono text-xs">{order.id}</span>
+            Order #{order.orderNumber}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

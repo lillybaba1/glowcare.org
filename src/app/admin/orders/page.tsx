@@ -25,9 +25,12 @@ import {
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
 
@@ -37,6 +40,7 @@ export default function AdminOrdersPage() {
             try {
                 const allOrders = await fetchAdminOrders();
                 setOrders(allOrders);
+                setFilteredOrders(allOrders);
             } catch (error: any) {
                 toast({
                     variant: "destructive",
@@ -50,6 +54,17 @@ export default function AdminOrdersPage() {
 
         loadOrders();
     }, [toast]);
+    
+    useEffect(() => {
+        const lowercasedQuery = searchQuery.toLowerCase();
+        const result = orders.filter(order => 
+            (order.orderNumber && order.orderNumber.toLowerCase().includes(lowercasedQuery)) ||
+            order.customer.name.toLowerCase().includes(lowercasedQuery) ||
+            order.customer.phone.includes(searchQuery)
+        );
+        setFilteredOrders(result);
+    }, [searchQuery, orders]);
+
 
     const getStatusBadge = (status: string) => {
         switch (status.toLowerCase()) {
@@ -83,15 +98,27 @@ export default function AdminOrdersPage() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Orders</CardTitle>
-                <CardDescription>
-                    View and manage all customer orders.
-                </CardDescription>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex-1">
+                        <CardTitle>Orders</CardTitle>
+                        <CardDescription>
+                            View, search, and manage all customer orders.
+                        </CardDescription>
+                    </div>
+                     <div className="w-full md:w-auto md:max-w-xs">
+                        <Input 
+                            placeholder="Search Order # or Customer..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
                  <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>Order #</TableHead>
                             <TableHead>Customer</TableHead>
                             <TableHead className="hidden md:table-cell">Date</TableHead>
                             <TableHead className="text-right">Total</TableHead>
@@ -104,11 +131,12 @@ export default function AdminOrdersPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {orders.length > 0 ? (
-                            orders.map((order) => {
+                        {filteredOrders.length > 0 ? (
+                            filteredOrders.map((order) => {
                                 const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
                                 return (
                                 <TableRow key={order.id}>
+                                    <TableCell className="font-mono text-xs">{order.orderNumber}</TableCell>
                                     <TableCell>
                                         <div className="font-medium">{order.customer.name}</div>
                                         <div className="hidden text-sm text-muted-foreground md:inline">
@@ -129,8 +157,8 @@ export default function AdminOrdersPage() {
                             )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
-                                    No orders found.
+                                <TableCell colSpan={8} className="h-24 text-center">
+                                    {searchQuery ? "No orders match your search." : "No orders found."}
                                 </TableCell>
                             </TableRow>
                         )}

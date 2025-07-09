@@ -75,8 +75,10 @@ export default function CheckoutPage() {
       }
       
       const userId = currentUser.uid;
+      const orderNumber = Math.random().toString(36).substring(2, 10).toUpperCase();
 
       const orderData = {
+        orderNumber: orderNumber,
         customer: {
           name: data.name,
           phone: data.phone,
@@ -97,7 +99,7 @@ export default function CheckoutPage() {
 
       toast({
         title: 'Order Placed!',
-        description: 'Thank you for your purchase. We have received your order.',
+        description: `Your order #${orderNumber} has been received. Thank you!`,
       });
 
       clearCart();
