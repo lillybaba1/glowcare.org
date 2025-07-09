@@ -20,6 +20,7 @@
       }
     },
     "orders": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('isAdmin').val() === true || (query.orderByChild === 'customer/userId' && query.equalTo === auth.uid))",
       ".indexOn": "customer/userId",
       "$orderId": {
         ".read": "auth.uid != null && (data.child('customer/userId').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)",
