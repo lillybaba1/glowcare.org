@@ -5,6 +5,12 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getWhatsappNumber } from '@/lib/data';
+import { Phone } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // WhatsApp SVG Icon
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -13,15 +19,14 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     width="24"
     height="24"
     viewBox="0 0 24 24"
-    fill="none"
+    fill="currentColor"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="0"
     strokeLinecap="round"
     strokeLinejoin="round"
     {...props}
   >
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-    <path d="M14.05 16.95A10 10 0 0 0 14 6.94M14.05 12.95A5 5 0 0 0 14 9.94"></path>
+    <path d="M16.75 13.96c.25.13.41.2.46.3.05.1.03.48-.18.69a1.49 1.49 0 0 1-1.14.44c-.36 0-.8-.13-1.66-.54a7.25 7.25 0 0 1-2.97-2.66 7.47 7.47 0 0 1-1.4-2.99c-.1-.26-.2-.51-.2-.76a.53.53 0 0 1 .52-.52c.1 0 .22.01.32.02.13.01.24.01.35-.01a.69.69 0 0 1 .58.5c.29.93.94 1.83 1.03 1.95.09.12.1.2.04.35-.07.15-.17.25-.3.41-.12.16-.24.31-.36.46a.26.26 0 0 0-.08.23c.18.48.58.98 1.15 1.51a5.1 5.1 0 0 0 2.22 1.52.26.26 0 0 0 .3-.07c.1-.12.21-.24.31-.38s.19-.27.3-.27c.1 0 .22.04.34.13zm-5.4-11.23a9.73 9.73 0 0 0-7.85 16.48l-1.32 4.8 4.92-1.29a9.74 9.74 0 0 0 15.58-9.5A9.73 9.73 0 0 0 11.35 2.73z"></path>
   </svg>
 );
 
@@ -39,15 +44,33 @@ export default function WhatsAppButton() {
     }, []);
 
     if (!phoneNumber) {
-        return null; // Don't render the button if no number is set in the admin panel
+        return null;
     }
   
     return (
-      <Button asChild size="icon" className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-[#25D366] hover:bg-[#128C7E] text-white">
-        <Link href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" aria-label="Contact us on WhatsApp">
-            <WhatsAppIcon className="h-7 w-7"/>
-        </Link>
-      </Button>
+      <Popover>
+        <PopoverTrigger asChild>
+           <Button size="icon" className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90 text-primary-foreground" aria-label="Contact us">
+            <Phone className="h-7 w-7"/>
+           </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2 mb-2" side="top" align="end">
+            <div className="flex flex-col gap-2">
+                <Button asChild variant="outline" className="justify-start gap-3 px-4 py-2 h-auto">
+                     <Link href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <WhatsAppIcon className="h-6 w-6 text-[#25D366]" />
+                        <span className="font-semibold">WhatsApp</span>
+                    </Link>
+                </Button>
+                <Button asChild variant="outline" className="justify-start gap-3 px-4 py-2 h-auto">
+                    <Link href={`tel:${phoneNumber}`} className="flex items-center gap-2">
+                        <Phone className="h-6 w-6 text-primary" />
+                        <span className="font-semibold">Phone Call</span>
+                    </Link>
+                </Button>
+            </div>
+        </PopoverContent>
+      </Popover>
     );
   }
   
