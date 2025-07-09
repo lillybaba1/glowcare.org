@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Sparkles, Instagram, Facebook, Twitter } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
-import { getSocialMediaUrls } from '@/lib/data';
+import { getSocialMediaUrls, getCategories } from '@/lib/data';
+import type { Category } from '@/lib/types';
 
 export default function Footer() {
   const { isAdmin } = useAuth();
@@ -14,13 +15,16 @@ export default function Footer() {
     instagram: '#',
     twitter: '#',
   });
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    async function fetchUrls() {
+    async function fetchFooterData() {
       const urls = await getSocialMediaUrls();
       setSocialUrls(urls);
+      const cats = await getCategories();
+      setCategories(cats);
     }
-    fetchUrls();
+    fetchFooterData();
   }, []);
 
   return (
@@ -51,9 +55,13 @@ export default function Footer() {
               <h4 className="font-semibold text-foreground mb-3">Shop</h4>
               <ul className="space-y-2">
                 <li><Link href="/products" className="hover:text-primary transition-colors">All Products</Link></li>
-                <li><Link href="/products?category=sunscreens" className="hover:text-primary transition-colors">Sunscreens</Link></li>
-                <li><Link href="/products?category=cleansers" className="hover:text-primary transition-colors">Cleansers</Link></li>
-                <li><Link href="/products?category=moisturizers" className="hover:text-primary transition-colors">Moisturizers</Link></li>
+                {categories.slice(0, 3).map((category) => (
+                    <li key={category.id}>
+                        <Link href={`/products?category=${category.name.toLowerCase()}`} className="hover:text-primary transition-colors">
+                            {category.name}
+                        </Link>
+                    </li>
+                ))}
               </ul>
             </div>
             <div>
@@ -93,5 +101,3 @@ export default function Footer() {
     </footer>
   );
 }
-
-    
