@@ -1,20 +1,14 @@
 
 rules_version = '2';
 
+// By default, deny all reads and writes
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files.
-    // This is necessary for product images, category images, etc., to be
-    // visible to all users on the website.
+    // Allow public read access to all files
+    // This is safe for product images, category images, and other public assets
     match /{allPaths=**} {
       allow read;
-    }
-
-    // Restrict write access to only authenticated users.
-    // This prevents unauthorized users from uploading files.
-    // For enhanced security, you could restrict this further to only admins.
-    match /{allPaths=**} {
-        allow write: if request.auth != null;
+      allow write: if request.auth != null;
     }
   }
 }
