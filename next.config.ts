@@ -35,6 +35,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config) => {
+    // Use polling for file watching in development to avoid issues in some containerized environments.
+    config.watchOptions = {
+      poll: 1000,
+      aggregateTimeout: 300,
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
